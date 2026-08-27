@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrystalOS Archive Access — Breach Alert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Cormorant+SC:wght@500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:        #060a12;
+    --panel:       #0c161c;
+    --crystal:     #6df0e2;
+    --crystal-dim: #3f8f88;
+    --old-gold:    #c9a94e;
+    --gold-dim:    #7a6832;
+    --ember:       #e8632c;
+    --parchment:   #a9c0bb;
+    --parchment-dim: #599b8f;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(111,232,220,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 100% 100%, rgba(201,169,78,0.05), transparent 60%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+  }
+
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+    z-index:50;
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    box-shadow:inset 0 0 220px rgba(0,0,0,0.65);
+    z-index:51;
+  }
+
+  .frame{
+    max-width:880px;
+    margin:0 auto;
+    padding:56px 28px 90px;
+    position:relative;
+    z-index:1;
+  }
+
+  .console-head{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    padding-bottom:28px;
+  }
+
+  .sigil{ flex:0 0 auto; width:96px; height:96px; }
+  .sigil-spin{ transform-origin:50% 50%; animation:spin 40s linear infinite; }
+  .sigil-spin-rev{ transform-origin:50% 50%; animation:spin-rev 26s linear infinite; }
+  @keyframes spin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  @keyframes spin-rev{ from{transform:rotate(360deg);} to{transform:rotate(0deg);} }
+  @media (prefers-reduced-motion:reduce){
+    .sigil-spin,.sigil-spin-rev,.blink,.flicker{ animation:none !important; }
+  }
+
+  .head-text{ flex:1 1 auto; min-width:0; }
+
+  .eyebrow{
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.28em;
+    font-size:12px;
+    color:var(--old-gold);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+
+  h1{
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size:clamp(22px,4vw,32px);
+    letter-spacing:0.03em;
+    color:#eaf7f4;
+    margin:0 0 10px;
+    text-shadow:0 0 18px rgba(111,232,220,0.35);
+  }
+  .status-row{
+  color:var(--parchment-dim);
+}
+.status-row span b{
+  color:var(--crystal);
+  font-weight:500;
+}
+  .query-line .prompt{ color:var(--old-gold); }
+  .cursor{
+    display:inline-block;
+    width:7px;height:14px;
+    background:var(--crystal);
+    vertical-align:-2px;
+    margin-left:4px;
+    animation:blink 1.1s steps(1) infinite;
+  }
+  .dot{
+    display:inline-block;
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--crystal);
+    box-shadow:0 0 8px var(--crystal);
+    margin-right:6px;
+    animation:blink 2.4s ease-in-out infinite;
+  }
+  .rule{
+    border:none;
+    height:1px;
+    margin:26px 0;
+    background:linear-gradient(to right, var(--old-gold), rgba(201,169,78,0.05));
+  }
+
+  .log{
+    position:relative;
+    margin:30px 0;
+    padding:22px 24px 22px 26px;
+    background:linear-gradient(180deg, rgba(111,232,220,0.035), rgba(111,232,220,0) 40%), var(--panel);
+    border:1px solid rgba(111,232,220,0.14);
+    border-left:3px solid var(--sev-color, var(--crystal-dim));
+  }
+  .log::before, .log::after{
+    content:"";
+    position:absolute;
+    width:14px; height:14px;
+    border-color:var(--old-gold);
+    opacity:0.65;
+  }
+  .log::before{ top:-1px; right:-1px; border-top:1px solid; border-right:1px solid; }
+  .log::after{ bottom:-1px; right:-1px; border-bottom:1px solid; border-right:1px solid; }
+
+  .log-head{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .log-id{
+    font-family:'Orbitron', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--old-gold);
+    letter-spacing:0.04em;
+  }
+  
+  .log-title{
+    font-family:'Orbitron', sans-serif;
+    font-size:14px;
+    font-weight:500;
+    color:#eaf7f4;
+    letter-spacing:0.02em;
+    flex:1 1 auto;
+  }
+  
+  .tag{
+    font-size:10px;
+    letter-spacing:0.08em;
+    padding:3px 9px;
+    border:1px solid var(--sev-color, var(--crystal-dim));
+    color:var(--sev-color, var(--crystal));
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  .rule{
+    border:none;
+    height:1px;
+    margin:26px 0;
+    background:linear-gradient(to right, var(--old-gold), rgba(201,169,78,0.05));
+  }
+  .log-body{
+    font-size:13.4px;
+    line-height:1.72;
+    color:var(--parchment);
+  }
+  .log-body em.redacted{
+    background:#1c1108;
+    color:#1c1108;
+    padding:0 6px;
+    border-radius:1px;
+    user-select:none;
+    font-style:normal;
+  }
+
+  .lvl-sensitive { --sev-color:var(--ember); }
+  .lvl-contain   { --sev-color:#9a8fd6; }
+
+  .console-foot{
+    margin-top:44px;
+    text-align:center;
+  }
+  .console-foot .rule{ margin-bottom:18px; }
+  .foot-line{
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.2em;
+    font-size:13px;
+    color:var(--ember);
+    text-transform:uppercase;
+  }
+
+  @media (max-width:560px){
+    .frame{ padding:34px 16px 70px; }
+    .console-head{ gap:16px; }
+    .sigil{ width:72px; height:72px; }
+    .log{ padding:18px 16px 18px 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <div class="console-head">
+    <svg class="sigil" viewBox="0 0 100 100">
+      <g class="sigil-spin">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#c9a94e" stroke-width="0.8" opacity="0.55"/>
+        <g stroke="#c9a94e" stroke-width="1" opacity="0.7">
+          <line x1="50" y1="4" x2="50" y2="12"/>
+          <line x1="50" y1="88" x2="50" y2="96"/>
+          <line x1="4" y1="50" x2="12" y2="50"/>
+          <line x1="88" y1="50" x2="96" y2="50"/>
+          <line x1="18" y1="18" x2="24" y2="24"/>
+          <line x1="76" y1="76" x2="82" y2="82"/>
+          <line x1="18" y1="82" x2="24" y2="76"/>
+          <line x1="76" y1="24" x2="82" y2="18"/>
+        </g>
+      </g>
+      <g class="sigil-spin-rev">
+        <circle cx="50" cy="50" r="33" fill="none" stroke="#6df0e2" stroke-width="1.1" opacity="0.8"/>
+        <circle cx="50" cy="17" r="1.6" fill="#6df0e2"/>
+        <circle cx="50" cy="83" r="1.6" fill="#6df0e2"/>
+      </g>
+      <circle cx="50" cy="50" r="20" fill="none" stroke="#eaf7f4" stroke-width="0.7" opacity="0.5"/>
+      <circle cx="50" cy="50" r="3.2" fill="#6df0e2" opacity="0.9"/>
+    </svg>
+
+    <div class="head-text">
+      <p class="eyebrow">CrystalOS · Restricted Retrieval · Leo Use Only</p>
+      <h1>ARCHIVE ACCESS — MOTHERCRYSTAL MAINFRAME&nbsp;Ω</h1>
+    </div>
+  </div>
+    <div class="head-text">
+        <span><span class="dot"></span>LINK<b>&nbsp;STABLE</b></span>
+        <span>AUTH&nbsp;<b>PREVIEW ACCESS</b></span>
+        <span>CHANNEL&nbsp;<b>BREACHED</b></span>
+        <span>CYCLE&nbsp;<b>3848</b></span>
+      </div>
+    </div>
+  </div>
+  <hr class="rule">
+  <div class="log lvl-sensitive">
+    <div class="log-head">
+      <span class="log-id">LOG&nbsp;27/08/2026</span>
+      <span class="log-title">Disconnected Node</span>
+      <span class="tag">Alerting. Monitor closely. Escalate to emergency node #1355</span>
+    </div>
+    <div class="log-body">
+      We had a severe databreach. Meta access likely. Do not attempt to re-establish communication with node Nald'Thal. 
+    </div>
+  </div>
+
+  <div class="console-foot">
+    <hr class="rule">
+    <p class="foot-line">Databreach detected, revoking access — Mothercrystal Mainframe&nbsp;Ω</p>
+  </div>
+
+</div>
+</body>
+</html>
