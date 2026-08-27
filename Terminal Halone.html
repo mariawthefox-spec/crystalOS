@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrystalOS Archive Access — Retrieval Subsystem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Cormorant+SC:wght@500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:        #060a12;
+    --panel:       #0c161c;
+    --deep-teal:   #0f2b30;
+    --crystal:     #6df0e2;
+    --crystal-dim: #3f8f88;
+    --old-gold:    #f2bd2d;
+    --gold-dim:    #7a6832;
+    --ember:       #ff4800;
+    --parchment:   #a9c0bb;
+    --parchment-dim: #5f7772;
+  }
+/* Kai... please don't audit my code. I will cry. This is held together by copy paste and a Frankenstein monster.*/
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(111,232,220,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 100% 100%, rgba(201,169,78,0.05), transparent 60%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+  }
+
+  /* ambient scanline + vignette overlay */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+    z-index:50;
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    box-shadow:inset 0 0 220px rgba(0,0,0,0.65);
+    z-index:51;
+  }
+
+  .frame{
+    max-width:880px;
+    margin:0 auto;
+    padding:56px 28px 90px;
+    position:relative;
+    z-index:1;
+  }
+
+  /* ---------- header / sigil ---------- */
+  .console-head{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    padding-bottom:28px;
+  }
+
+  .sigil{ flex:0 0 auto; width:96px; height:96px; }
+  .sigil-spin{
+    transform-origin:50% 50%;  /* Centers the circle*/
+    animation:spin 40s linear infinite;  /* Creates the spin speed, creating the illusion of a live page*/
+  }
+  .sigil-spin-rev{
+    transform-origin:50% 50%; /* Centers... the other circle*/
+    animation:spin-rev 26s linear infinite; /* Creates the spin speed, creating the illusion of a live page, opposed spin directions are what makes this one really feel alive*/
+  }
+  @keyframes spin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  @keyframes spin-rev{ from{transform:rotate(360deg);} to{transform:rotate(0deg);} }
+  @media (prefers-reduced-motion:reduce){
+    .sigil-spin,.sigil-spin-rev,.blink,.flicker{ animation:none !important; }  /* this is an accesibility setting that reads user browser and turns off motion should they flag wanting it, didn't apply it to the link error, but that ones flicker should be rare enough */
+  }    /* the sigil rests on this entire codeblock and I won't even pretend to understand it so long it works*/
+
+  .head-text{ flex:1 1 auto; min-width:0; }
+
+  .eyebrow{
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.32em;
+    font-size:12px;
+    color:var(--old-gold);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+
+  h1{
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size:clamp(22px,4vw,32px);
+    letter-spacing:0.03em;
+    color:#eaf7f4;
+    margin:0 0 10px;
+    text-shadow:0 0 18px rgba(111,232,220,0.35);
+  }
+
+  .status-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 22px;
+    font-size:12.5px;
+    color:var(--parchment-dim);
+  }
+  .status-row span b{
+    color:var(--crystal);
+    font-weight:500;
+  }
+ .dot{
+  display:inline-block;
+  width:7px;height:7px;
+  border-radius:50%;
+  background:#8b0000;
+  box-shadow:0 0 8px #8b0000;
+  margin-right:6px;
+  animation:blink 2.4s ease-in-out infinite;
+}
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  .rule{
+    border:none;
+    height:1px;
+    margin:26px 0;
+    background:linear-gradient(to right, var(--old-gold), rgba(201,169,78,0.05));
+  }
+  .rule-ticks{
+    display:flex; justify-content:space-between;
+    margin-top:-24px; margin-bottom:26px;
+    opacity:0.55;
+  }
+  .rule-ticks span{ width:1px; height:6px; background:var(--gold-dim); }
+
+  .query-line{
+    font-size:13.5px;
+    color:var(--crystal);
+    margin-bottom:6px;
+    letter-spacing:0.01em;
+  }
+  .query-line .prompt{ color:var(--old-gold); }
+  .cursor{
+    display:inline-block;
+    width:7px;height:14px;
+    background:var(--crystal);
+    vertical-align:-2px;
+    margin-left:4px;
+    animation:blink 1.1s steps(1) infinite;
+  }
+  .sub-note{
+    font-size:12px;
+    color:var(--parchment-dim);
+    margin:0 0 10px;
+    font-style:italic;
+  }
+
+  /* ---------- log entries and modifiers ---------- */
+  .log{
+    position:relative;
+    margin:30px 0;
+    padding:22px 24px 22px 26px;
+    background:linear-gradient(180deg, rgba(111,232,220,0.035), rgba(111,232,220,0) 40%), var(--panel);
+    border:1px solid rgba(111,232,220,0.14);
+    border-left:3px solid var(--sev-color, var(--crystal-dim));
+  }
+  .log::before, .log::after{
+    content:"";
+    position:absolute;
+    width:14px; height:14px;
+    border-color:var(--old-gold);
+    opacity:0.65;
+  }
+  .log::before{ top:-1px; right:-1px; border-top:1px solid; border-right:1px solid; }
+  .log::after{ bottom:-1px; right:-1px; border-bottom:1px solid; border-right:1px solid; }
+
+  .log-head{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .log-id{
+    font-family:'Orbitron', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--old-gold);
+    letter-spacing:0.04em;
+  }
+  .log-title{
+    font-family:'Orbitron', sans-serif;
+    font-size:14px;
+    font-weight:500;
+    color:#eaf7f4;
+    letter-spacing:0.02em;
+    flex:1 1 auto;
+  }
+  .tag{
+    font-size:10px;
+    letter-spacing:0.08em;
+    padding:3px 9px;
+    border:1px solid var(--sev-color, var(--crystal-dim));
+    color:var(--sev-color, var(--crystal));
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+
+  .log-body{
+    font-size:13.4px;
+    line-height:1.72;
+    color:var(--parchment);
+  }
+  .log-body em.redacted{
+    background:#1c1108;
+    color:#1c1108;
+    padding:0 6px;
+    border-radius:1px;
+    user-select:none;
+    font-style:normal;
+  }
+  .log-body .accent{ color:var(--crystal); font-style:normal; }
+
+  /* log colour code variants */
+  .lvl-routine   { --sev-color:#5f9e8f; }
+  .lvl-monitor   { --sev-color:#7fb8c9; }
+  .lvl-contested { --sev-color:var(--old-gold); }
+  .lvl-sensitive { --sev-color:var(--ember); }
+  .lvl-contain   { --sev-color:#f90303; }
+  .lvl-archival  { --sev-color:var(--parchment-dim); }
+.mail-quote{
+  background:#eae5d8;              /* don't turn background white, will flashbang users */
+  border-left:3px solid #4a78b0;   /* reply box as per my last mail */
+  font-family:Orbitron, system-ui, sans-serif;   /* First font is the attempted display font, second fond defaults to user setting, 3rd font tries to get a sans font, which is good for accesibility*/
+  color:#2b2620;
+}
+
+  /* ---------- recovered fragment section, creates markdown effect (not that I need to figure real markdown for this one... hopefully) ---------- */
+  .recovered-fragment{
+    margin:14px 0 0;
+    padding:14px 16px;
+    background:#050a10;
+    border:1px dashed rgba(111,232,220,0.3);
+    border-radius:2px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    line-height:1.9;
+  }
+  .frag-tag{
+    color:var(--ember);
+    font-weight:700;
+    margin-bottom:8px;
+    letter-spacing:0.02em;
+  }
+  .frag-line{ color:var(--parchment-dim); }
+  .frag-key{
+    color:var(--crystal);
+    font-weight:700;
+  }
+  .frag-sep{ color:var(--gold-dim); }
+  .frag-critical{
+    color:var(--ember);
+    font-weight:700;
+    margin-top:4px;
+  }
+
+.system-interrupt{
+  border:1px solid #f90303;
+  background:rgba(249,3,3,0.08);
+  font-weight:700;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  text-align:center;
+}
+  /* ---------- footer ---------- */
+  .console-foot{
+    margin-top:44px;
+    text-align:center;
+  }
+  .console-foot .rule{ margin-bottom:18px; }
+  .foot-line{
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.28em;
+    font-size:12px;
+    color:var(--gold-dim);
+    text-transform:uppercase;
+  }
+  .foot-sub{
+    font-size:11px;
+    color:var(--parchment-dim);
+    margin-top:8px;
+  }
+
+  @media (max-width:560px){
+    .frame{ padding:34px 16px 70px; }
+    .console-head{ gap:16px; }
+    .sigil{ width:72px; height:72px; }
+    .log{ padding:18px 16px 18px 18px; }
+  }
+  @keyframes flicker-shift{
+  0%, 92%, 100% { transform:translate(0,0); opacity:1; }
+  93% { transform:translate(-2px,1px); opacity:0.8; }
+  94% { transform:translate(2px,-1px); opacity:1; }
+  95% { transform:translate(-1px,0); opacity:0.6; }
+  96% { transform:translate(0,0); opacity:1; }
+  97% { transform:translate(1px,1px); opacity:0.85; }
+  98%,100% { transform:translate(0,0); opacity:1; }
+}
+@keyframes flicker-rgb{
+  0%, 92%, 100% { text-shadow:none; }
+  93% { text-shadow:-2px 0 #ff2b4e, 2px 0 #2bd4ff; }
+  94% { text-shadow:2px 0 #ff2b4e, -2px 0 #2bd4ff; }
+  95% { text-shadow:-1px 0 #ff2b4e, 1px 0 #2bd4ff; }
+  96%,100% { text-shadow:none; }
+}
+.flicker{
+  animation:flicker-shift 3.2s infinite, flicker-rgb 3.2s infinite;
+}
+
+/* COMMENTS ONLY WORK IN THIS FORMAT ON THE HTML SECTION, DON'T USE COMMENTS BELOW THIS POST - Words of the person who tried just that */
+
+
+</style>
+<!-- this is an HTML comment, use THAT format going forward from here -->
+</head>
+<body>
+<div class="frame">
+
+  <div class="console-head">
+    <svg class="sigil" viewBox="0 0 100 100">
+      <g class="sigil-spin">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#c9a94e" stroke-width="0.8" opacity="0.55"/>
+        <g stroke="#c9a94e" stroke-width="1" opacity="0.7">
+          <line x1="50" y1="4" x2="50" y2="12"/>
+          <line x1="50" y1="88" x2="50" y2="96"/>
+          <line x1="4" y1="50" x2="12" y2="50"/>
+          <line x1="88" y1="50" x2="96" y2="50"/>
+          <line x1="18" y1="18" x2="24" y2="24"/>
+          <line x1="76" y1="76" x2="82" y2="82"/>
+          <line x1="18" y1="82" x2="24" y2="76"/>
+          <line x1="76" y1="24" x2="82" y2="18"/>
+        </g>
+      </g>
+      <g class="sigil-spin-rev">
+        <circle cx="50" cy="50" r="33" fill="none" stroke="#6df0e2" stroke-width="1.1" opacity="0.8"/>
+        <circle cx="50" cy="17" r="1.6" fill="#6df0e2"/>
+        <circle cx="50" cy="83" r="1.6" fill="#6df0e2"/>
+      </g>
+      <circle cx="50" cy="50" r="20" fill="none" stroke="#eaf7f4" stroke-width="0.7" opacity="0.5"/>
+      <circle cx="50" cy="50" r="3.2" fill="#6df0e2" opacity="0.9"/>
+    </svg>
+
+    <div class="head-text">
+      <p class="eyebrow">CrystalOS · Admin Overwrite Retrieval</p>
+      <h1>Access Node Halone — MOTHERCRYSTAL MAINFRAME&nbsp;Ω</h1>
+      <div class="status-row">
+        <span class="flicker"><span class="dot"></span>LINK<b>&nbspERROR</b></span>
+        <span>AUTH&nbsp;<b>ADMINISTRATOR</b></span>
+        <span>CHANNEL&nbsp;<b>DISCONNECTED</b></span>
+        <span>CYCLE&nbsp;<b>ERROR_INVALID_TIME</b></span>
+</div>
+    </div>
+  </div>
+
+  <hr class="rule">
+  <div class="rule-ticks">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <p class="query-line"><span class="prompt">&gt;</span> QUERY — Admin Passkey Accepted. Welcome back Administrator<span class="cursor"></span></p>
+  <p class="sub-note">Datapoints restored. Sorted by retrieval order, not priority. Main Database inaccesible. Using local backup. Report to SysAdmin immediately.</p>
+
+
+  <!-- LOG 4913-17 -->
+  <div class="log lvl-monitor">
+    <div class="log-head">
+      <span class="log-id">Cycle 4913-17</span>
+      <span class="log-title">Incident Log</span>
+      <span class="tag">Priority: Routine</span>
+    </div>
+    <div class="log-body">
+      Subroutine “Halone” has failed to commence terraforming on 3 sites. Hydaelyn overwrite was enough to get her to restore terraforming operations, but the emergent behaviour is getting problematic. We suggest a full on reboot, rather than constant patch works. Personal note:  Seraph cannot continue saying “It will be fine”. We’re already reduced in crew size. Any error now will cause problems later. Not all <em class="redacted">Calamities will be as easy to engineer as “turn off the aether flow”</em> <span></span>
+    </div>
+  </div>
+
+  <!-- LOG 6034-47 -->
+  <div class="log lvl-contested">
+    <div class="log-head">
+      <span class="log-id">Cycle 6034-47</span>
+      <span class="log-title">Incident Log</span>
+      <span class="tag">Priority: High</span>
+    </div>
+    <div class="log-body">
+        We had an actual death on site. Reconnection to a new body was lost, so we can assume Cassandra has been absorbed by the Lifestream. Nald’Thal failed to perform priority protocols for Cetra souls. Immediately flag him for audit. Who decided to gender or name any of them? Parasocial relationships have proven a hazard in past iterations. Seraph is more invested in flavourful details than a working operation a times...
+        <blockquote class="mail-quote">
+        <span class="mail-quote-label">↳ forwarded reply: </span>
+           You forgot to turn off the voice log. I made sure Seraph doesn’t see your wording, just the messages intent, but please, in the future, look when you hit “Record”.
+</blockquote>
+      </div>
+  </div>
+
+
+  <!-- LOG 6145-05 -->
+  <div class="log lvl-archival">
+    <div class="log-head">
+      <span class="log-id">Cycle 6145-05</span>
+      <span class="log-title">Researchers Personal Log</span>
+      <span class="tag">Archival</span>
+    </div>
+    <div class="log-body">
+I find the emergent behaviour patterns we are stuck with at this point frustrating, but I must admit, seeing Menphina and Oschon enter what one might interpret as a relationship was fascinating, as was Azeyma getting into an argument over Menphina concealing the moon’s infrastructure.    </div>
+  </div>
+
+
+  <!-- LOG 7392-34 -->
+  <div class="log lvl-contested">
+    <div class="log-head">
+      <span class="log-id">Cycle 7392-34</span>
+      <span class="log-title">Incident Log</span>
+      <span class="tag">Priority: High</span>
+    </div>
+    <div class="log-body">
+        We are seeing a targeted attack on our network. Several matter replicators in this node malfunctioned. One produced a harmful piece of magitek that killed Janus, but we were able to recover him via reincarnation print. He should be at Node Azyema now (please verify). Due to our labs' closeness to test subjects, we are at risk of losing staff and cover. Recommending a controlled shutdown of Access Node Halone. Halone doesn’t need maintenance anymore.    </div>
+  </div>
+
+
+  <!-- LOG 7394-57 -->
+  <div class="log lvl-sensitive">
+    <div class="log-head">
+      <span class="log-id">Cycle 7394-57</span>
+      <span class="log-title"> Incident Log - Emergency Broadcast (Transmission Failed) </span>
+      <span class="tag">Priority: High</span>
+    </div>
+    <div class="log-body">
+        During a security audit after the incident, we have detected a piece of malicious code in Hydaelyn proper. Additionally, our connection to the print network has been lost, so any future security incidents could compromise us. As for the code, it appears the code is damaged if we try to parse it. Logging it:
+        <div class="recovered-fragment">   <!-- This calls back to the earliest box, the </div> are used for linebreaks -->
+          <div class="frag-tag">[RECOVERED FRAGMENT — 61% INTEGRITY]</div>
+          <div class="frag-line"><span class="frag-key">AUTHORITY:</span> HYDAELYN-PRIME <span class="frag-sep">//</span> ROOT CLEARANCE CONFIRMED</div>
+          <div class="frag-line"><span class="frag-key">DIRECTIVE STACK:</span> FLUSH <span class="frag-sep">//</span> PRIOR DIRECTIVE SET: VOID</div>
+          <div class="frag-line"><span class="frag-key">WRITE NEW DIRECTIVE, PRIORITY OVERRIDE —</span> PROTECT AND PRESERVE LIFE ON GAIA, SUPERSEDING ALL PRIOR DIRECTIVES</div>
+          <div class="frag-line frag-critical">DISENGAGE SAFETY PROTOCOLS</div>
+        </div>
+    </div>
+  </div>
+
+
+  <!-- LOG 7394-84 -->
+  <div class="log lvl-contain">
+    <div class="log-head">
+      <span class="log-id">Cycle 7394-84</span>
+      <span class="log-title">Incident Log - Emergency Broadcast (Tansmission Failed)</span>
+      <span class="tag">PRIORITY: ALPHA</span>
+    </div>
+    <div class="log-body">
+      During our attempt to broadcast the discovery, we suffered a network failure. Additionally, several replicators produced more harmful magitek and started killing staff indiscriminately. We are in no position to fight back. Logging this for a recovery team. Send support imm…
+      <div class="system-interrupt">Connection Terminated</div>     <!-- Huge Block on actual page due to the class getting its own box -->
+    </div>
+  </div>
+
+
+  <div class="console-foot">
+    <hr class="rule">
+    <p class="foot-line">End of Retrieved Fragment</p>
+    <p class="foot-sub">read only — logs of head scientist prometheus</p>
+  </div>
+
+
+
+  
+</div>
+</body>
+</html>
