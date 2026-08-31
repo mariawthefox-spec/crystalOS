@@ -4,44 +4,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Metamorphous&family=MedievalSharp&family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+
   :root{
-    --parchment:#EADDCC;
-    --parchment-2:#e9e1cd;
-    --ink:#1c2a1f;
-    --ink-soft:#3c4a3a;
-    --moss-deep:#294730;
-    --moss-mid:#54724d;
-    --moss-pale:#7d9a6f;
-    --bark:#6b4a30;
-    --bark-dark:#4a3220;
-    --ember:#b8492a;
-    --gold:#9c7a2d;
-    --rule:#c9bd9c;
-    --card-surface:#fce2bb;
-    --shadow: 0 18px 50px -22px rgba(20,30,20,0.55);
-    --font-display:'Metamorphous', 'Cormorant Garamond', serif;
-    --font-body:'EB Garamond', 'Iowan Old Style', serif;
-    --font-label:'Jost', 'Segoe UI', sans-serif;
-  }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --parchment:#111a13;
-      --parchment-2:#0d1510;
-      --ink:#e9e6d6;
-      --ink-soft:#c3c9b8;
-      --moss-deep:#8fbf8a;
-      --moss-mid:#7aa66e;
-      --moss-pale:#5c7a52;
-      --bark:#c99f6f;
-      --bark-dark:#8a6640;
-      --ember:#e9764a;
-      --gold:#d3b45c;
-      --rule:#3a4636;
-      --card-surface:#16211a;
-      --shadow: 0 18px 60px -20px rgba(0,0,0,0.7);
-    }
-  }
-  :root[data-theme="dark"]{
     --parchment:#111a13;
     --parchment-2:#0d1510;
     --ink:#e9e6d6;
@@ -55,7 +19,10 @@
     --gold:#d3b45c;
     --rule:#3a4636;
     --card-surface:#16211a;
-    --shadow: 0 18px 60px -20px rgba(0,0,0,0.7);
+    --shadow: 0 18px 50px -22px rgba(20,30,20,0.55);
+    --font-display:'Metamorphous', 'Cormorant Garamond', serif;
+    --font-body:'EB Garamond', 'Iowan Old Style', serif;
+    --font-label:'Jost', 'Segoe UI', sans-serif;
   }
 
   *{box-sizing:border-box;}
