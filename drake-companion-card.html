@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Metamorphous&family=MedievalSharp&family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-
+ 
   :root{
     --parchment:#111a13;
     --parchment-2:#0d1510;
@@ -19,7 +19,6 @@
     --gold:#d3b45c;
     --rule:#3a4636;
     --card-surface:#16211a;
-    --shadow: 0 18px 50px -22px rgba(20,30,20,0.55);
     --font-display:'Metamorphous', 'Cormorant Garamond', serif;
     --font-body:'EB Garamond', 'Iowan Old Style', serif;
     --font-label:'Jost', 'Segoe UI', sans-serif;
@@ -46,7 +45,7 @@
     box-shadow:var(--shadow);
   }
 
-  /* Character Art */
+  /* Character Art and title */
   .hero{
     position:relative;
     min-height:430px;
@@ -61,14 +60,14 @@
     object-position:62% 30%;
     filter:saturate(1.03);
   }
-  .hero::after{
+  .hero::after{  /* black fadeout over art */
     content:"";
     position:absolute;inset:0;
     background:
       linear-gradient(180deg, rgba(8,14,8,0) 0%, rgba(8,14,8,0.22) 38%, rgba(6,11,6,0.8) 100%),
       linear-gradient(90deg, rgba(8,14,8,0.55) 0%, rgba(8,14,8,0.05) 42%, rgba(8,14,8,0.05) 100%);
   }
-  .hero-text{
+  .hero-text{  /* gold letters title */
     position:relative;
     z-index:2;
     padding:28px 34px 22px;
@@ -130,7 +129,7 @@
     align-items:center;
     gap:10px;
   }
-  .section-title::after{
+  .section-title::after{   /* large line after headers */
     content:"";
     flex:1;
     height:1px;
@@ -224,7 +223,7 @@
     letter-spacing:.02em;
     color:var(--moss-deep);
   }
-  @media (max-width:600px){ .dossier{grid-template-columns:1fr;} }
+  
 
   /* traits/actions*/
   .entry{ margin:0 0 14px; font-size:16px; line-height:1.55; }
@@ -253,7 +252,7 @@
   .tag.fire{ background:var(--ember); }
   .tag.gold{ background:var(--gold); }
 
-  /* items */
+  /* items section */
   .item-card{
     border:1px solid var(--rule);
     border-left:4px solid var(--bark);
