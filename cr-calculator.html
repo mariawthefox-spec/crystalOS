@@ -68,6 +68,9 @@
     width: 68px;
     height: 68px;
     filter: drop-shadow(0 0 18px rgba(20,140,255,0.5));
+    /* The gif has its own dark backdrop; fade its edges so no square shows against the page */
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 38%, transparent 68%);
+    mask-image: radial-gradient(circle at 50% 50%, #000 38%, transparent 68%);
   }
   .head-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
 
