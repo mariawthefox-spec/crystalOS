@@ -492,6 +492,28 @@
   .foot-line { margin: 0; font-size: 11px; letter-spacing: 0.03em; color: var(--parchment); text-transform: uppercase; }
   .foot-sub { margin: 4px 0 0; font-size: 11px; color: var(--parchment-dim); }
 
+  /* ---------- Caretaker advisories (encounter-building notes) ---------- */
+  .advisories { --card-sev: var(--gold-dim); display: block; }
+  .advisories > summary { cursor: pointer; list-style: none; }
+  .advisories > summary::-webkit-details-marker { display: none; }
+  .advisories > summary:hover h2 { color: var(--crystal); }
+  .advisories > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .advisories[open] > summary { margin-bottom: 12px; }
+  .adv-chev { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--crystal-dim); transition: transform 0.15s; }
+  .advisories:not([open]) .adv-chev { transform: rotate(-90deg); }
+  .adv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  @media (max-width: 700px) { .adv-grid { grid-template-columns: minmax(0, 1fr); } }
+  .adv-note {
+    border: 1px solid rgba(111,232,220,0.14);
+    background: var(--void);
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .adv-title { display: flex; gap: 8px; align-items: baseline; margin: 0; font-size: 12px; font-weight: 500; color: var(--crystal); letter-spacing: 0.02em; }
+  .adv-title .log-id { font-size: 10px; color: var(--old-gold); }
+  .adv-rule { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--parchment); }
+  .adv-lore { margin: 0; font-size: 11.5px; line-height: 1.45; font-style: italic; color: var(--parchment-dim); border-left: 2px solid var(--gold-dim); padding-left: 8px; }
+
   /* Layout: adventure index (summary) on top, then one encounter workspace:
      inputs on the left, readout pinned on the right so the verdict stays in view while editing. */
 
@@ -579,10 +601,8 @@
 
   /* ---------- Workspace ---------- */
   .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
-  .workspace .side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
   @media (max-width: 880px) {
     .workspace { grid-template-columns: minmax(0, 1fr); }
-    .workspace .side { position: static; }
   }
   .main-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
@@ -786,6 +806,47 @@
     </div>
   </section>
 
+  <details class="card advisories" id="advisories" open>
+    <summary class="log-head">
+      <span class="adv-chev" aria-hidden="true"></span>
+      <span class="log-id">CA&ndash;01</span>
+      <h2>Warrior of Light Log &mdash; Troubleshooting</h2>
+      <span class="tag">Approved &middot; Seraph &middot; Cycle 9478</span>
+    </summary>
+    <ul class="adv-grid">
+      <li class="adv-note">
+        <p class="adv-title"><span class="log-id">Advisory 1</span>Many Creatures</p>
+        <p class="adv-rule">The more creatures in an encounter, the higher the risk that a lucky streak on their part could deal more damage to the characters than you expect. If your encounter includes more than two creatures per character, include fragile creatures that can be defeated quickly. This guideline is especially important for characters of level 1 or 2.</p>
+        <p class="adv-lore">Validated during Cohort FC-05, who quickly perished when faced with a swarm of giant bats before they managed to connect to Node 93.</p>
+      </li>
+      <li class="adv-note">
+        <p class="adv-title"><span class="log-id">Advisory 2</span>Adjustments</p>
+        <p class="adv-rule">A player&rsquo;s absence might warrant removing creatures from an encounter to keep it at the intended difficulty. Also, die rolls and other factors can result in an encounter being easier or harder than intended. You can adjust an encounter on the fly, such as by having creatures flee (making the encounter easier) or adding reinforcements (making the encounter harder).</p>
+        <p class="adv-lore">Enforcer Astraea requested several backup prints to run parallel to her active body. While an unusual request, we have allowed it to give her flexibility in her pattern tests.</p>
+      </li>
+      <li class="adv-note">
+        <p class="adv-title"><span class="log-id">Advisory 3</span>CR 0 Creatures</p>
+        <p class="adv-rule">Creatures that have a CR of 0, particularly ones that are worth 0 XP, should be used sparingly. If you want to include many CR 0 critters in an encounter, use swarms from the Monster Manual instead.</p>
+        <p class="adv-lore">For the last time, Janus: &ldquo;rats in a tavern&rsquo;s basement&rdquo; is not a valid starting point to confirm a pattern-compatible cohort.</p>
+      </li>
+      <li class="adv-note">
+        <p class="adv-title"><span class="log-id">Advisory 4</span>Number of Stat Blocks</p>
+        <p class="adv-rule">The best combat encounters often pair one kind of creature with another, such as magitek armour backed by imperial infantry. Be mindful of the number of stat blocks you need to run the encounter. Referencing more than two or three stat blocks for a single encounter can be daunting, particularly if the creatures are complex.</p>
+        <p class="adv-lore">Monitoring Agent Hermes noted that too many vectors can degrade observation quality. Please be mindful of the limits of the CrystalOS network. We have more data to parse than just the Warrior of Light pattern.</p>
+      </li>
+      <li class="adv-note">
+        <p class="adv-title"><span class="log-id">Advisory 5</span>Powerful Creatures</p>
+        <p class="adv-rule">If your combat encounter includes a creature whose CR is higher than the party&rsquo;s level, be aware that such a creature might deal enough damage with a single action to take out one or more characters. For example, an Ogre (CR 2) can kill a level 1 Wizard with a single blow.</p>
+        <p class="adv-lore">Using the reincarnation printer to become a dragon is no longer allowed. You have Typhon to thank for that.</p>
+      </li>
+      <li class="adv-note">
+        <p class="adv-title"><span class="log-id">Advisory 6</span>Unusual Features</p>
+        <p class="adv-rule">If a monster has a feature that lower-level characters can&rsquo;t easily overcome, consider not adding that monster to an encounter for characters whose level is lower than the monster&rsquo;s Challenge Rating.</p>
+        <p class="adv-lore">Same goes for becoming medusae. We know some of you found Cohort KC-03 getting petrified in their first Enforcer pattern test funny. Seraph did not.</p>
+      </li>
+    </ul>
+  </details>
+
   <details class="backup" id="backup">
     <summary>Backup &amp; transfer</summary>
     <div class="backup-body">
@@ -811,7 +872,7 @@
   <footer class="foot">
     <hr class="rule">
     <p class="foot-line" style="margin-top:12px;">CrystalOS / Ancients Archive &mdash; Calamity 5 data intake, Warrior of Light pattern-test subroutine</p>
-    <p class="foot-sub">XP-threshold and CR-value tables per the 2024 rules, kept here as local reference only.</p>
+    <p class="foot-sub">Difficulty budgets and monster XP follow the 2024 Dungeon Master&rsquo;s Guide.</p>
   </footer>
 </div>
 
@@ -1564,6 +1625,15 @@
     } catch (e) { /* ignore */ }
     return null;
   }
+
+  // ---------------------------------------------------------------- advisories: remember open/closed
+  (function () {
+    var d = $("advisories"), key = "wol-advisories-open";
+    try { if (localStorage.getItem(key) === "0") d.open = false; } catch (e) { /* ignore */ }
+    d.addEventListener("toggle", function () {
+      try { localStorage.setItem(key, d.open ? "1" : "0"); } catch (e) { /* ignore */ }
+    });
+  })();
 
   // ---------------------------------------------------------------- start
   state = loadLocal() || defaultState();
