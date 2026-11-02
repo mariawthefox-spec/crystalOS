@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Warrior of Light Log II</title>
+<title>CR calculator</title>
 <style>
   :root {
     color-scheme: dark;
@@ -586,8 +586,11 @@
   }
   .main-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
+  .party-groups { display: flex; flex-direction: column; gap: 10px; }
   .party-line { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
   .party-line .lvl { flex: 0 1 140px; min-width: 120px; }
+  .party-line .grp-del { align-self: flex-end; min-height: 36px; }
+  .party-foot { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 10px; }
   .party-total { font-size: 12px; color: var(--parchment-dim); margin-left: auto; align-self: center; font-variant-numeric: tabular-nums; }
 
   /* Number stepper: bigger tap targets than the browser's spinner arrows. */
@@ -728,19 +731,9 @@
             <h2>Warriors of Light</h2>
             <span class="tag">Monitor</span>
           </div>
-          <div class="party-line">
-            <div class="lvl">
-              <label class="field-label" for="party-level">Party level</label>
-              <select id="party-level"></select>
-            </div>
-            <div>
-              <label class="field-label" for="party-count">Players present</label>
-              <div class="stepper">
-                <button type="button" id="party-minus" aria-label="One fewer player">&minus;</button>
-                <input type="number" id="party-count" min="0" max="12" step="1" inputmode="numeric">
-                <button type="button" id="party-plus" aria-label="One more player">+</button>
-              </div>
-            </div>
+          <div class="party-groups" id="party-groups"></div>
+          <div class="party-foot">
+            <button class="add-btn" id="add-party-group" type="button">+ Add another level</button>
             <span class="party-total" id="party-total"></span>
           </div>
         </section>
@@ -878,18 +871,18 @@
 
   // ---------------------------------------------------------------- state
   function newTab(name, advId, party) {
-    return { id: uid("t"), name: name, adventureId: advId || null, party: party || { level: 5, count: 4 }, monsters: [] };
+    return { id: uid("t"), name: name, adventureId: advId || null, party: party || [{ level: 5, count: 4 }], monsters: [] };
   }
   function defaultState() {
-    var t = newTab("Test 01", null, { level: 5, count: 4 });
+    var t = newTab("Test 01", null, [{ level: 5, count: 4 }]);
     return { v: 4, adventures: [], tabs: [t], active: t.id, filter: ALL, pristine: true };
   }
 
-  // Older saves stored the party as level tiers (v2) or as a named roster with no-shows (v3).
-  // Fold either into one level + one head count.
+  // The party is a list of level groups, e.g. 3 players at level 5 + 1 at level 4.
+  // Older saves stored one level + head count, or a named roster with no-shows (v3).
   function toParty(t, roster) {
     if (t.party && !Array.isArray(t.party) && t.party.level != null) {
-      return { level: clampLevel(t.party.level), count: Math.max(0, int(t.party.count, 0)) };
+      return [{ level: clampLevel(t.party.level), count: Math.max(0, int(t.party.count, 0)) }];
     }
     var tiers = [];
     if (Array.isArray(t.party)) {
@@ -899,11 +892,14 @@
       roster.forEach(function (m) { if (absent.indexOf(m.id) === -1) tiers.push({ level: clampLevel(m.level), count: 1 }); });
       (t.guests || []).forEach(function (g) { tiers.push({ level: clampLevel(g.level), count: Math.max(0, int(g.count, 0)) }); });
     }
-    if (!tiers.length) return { level: 5, count: 4 };
-    var byLevel = {}, total = 0, best = tiers[0].level;
-    tiers.forEach(function (x) { byLevel[x.level] = (byLevel[x.level] || 0) + x.count; total += x.count; });
-    Object.keys(byLevel).forEach(function (l) { if (byLevel[l] > (byLevel[best] || 0)) best = +l; });
-    return { level: best, count: total };
+    if (!tiers.length) return [{ level: 5, count: 4 }];
+    // Merge duplicate levels, keep the first-seen order.
+    var out = [];
+    tiers.forEach(function (x) {
+      for (var i = 0; i < out.length; i++) if (out[i].level === x.level) { out[i].count += x.count; return; }
+      out.push({ level: x.level, count: x.count });
+    });
+    return out;
   }
 
   function cleanMonsters(list) {
@@ -956,9 +952,12 @@
   function monsterXp(m) { return m.mode === "xp" ? (parseFloat(m.value) || 0) : (CR_TO_XP[m.value] || 0); }
 
   function compute(tab) {
-    var b = XP_BY_LEVEL[tab.party.level] || [0, 0, 0];
-    var n = Math.max(0, int(tab.party.count, 0));
-    var low = b[0] * n, mod = b[1] * n, high = b[2] * n, xp = 0;
+    var low = 0, mod = 0, high = 0, n = 0, xp = 0;
+    tab.party.forEach(function (g) {
+      var b = XP_BY_LEVEL[g.level] || [0, 0, 0];
+      var c = Math.max(0, int(g.count, 0));
+      low += b[0] * c; mod += b[1] * c; high += b[2] * c; n += c;
+    });
     tab.monsters.forEach(function (m) { xp += monsterXp(m) * Math.max(0, int(m.count, 0)); });
     var band;
     if (n === 0 || xp === 0) band = "pending";
@@ -977,32 +976,51 @@
     save();
   }
 
-  // ---------------------------------------------------------------- party (one line)
+  // ---------------------------------------------------------------- party (level groups)
   function levelOptions(selected) {
     var out = "";
     for (var l = 1; l <= 20; l++) out += '<option value="' + l + '"' + (l === selected ? " selected" : "") + ">Level " + l + "</option>";
     return out;
   }
   function renderParty() {
-    var p = activeTab().party;
-    $("party-level").innerHTML = levelOptions(p.level);
-    if (document.activeElement !== $("party-count")) $("party-count").value = p.count;
+    var party = activeTab().party, box = $("party-groups");
+    box.innerHTML = "";
+    party.forEach(function (g, i) {
+      var row = document.createElement("div");
+      row.className = "party-line";
+      var sid = "party-level-" + i, cid = "party-count-" + i;
+      row.innerHTML =
+        '<div class="lvl"><label class="field-label" for="' + sid + '">Level</label><select id="' + sid + '">' + levelOptions(g.level) + '</select></div>' +
+        '<div><label class="field-label" for="' + cid + '">Players</label><div class="stepper">' +
+        '<button type="button" class="minus" aria-label="One fewer player">&minus;</button>' +
+        '<input type="number" id="' + cid + '" min="0" max="12" step="1" inputmode="numeric" value="' + g.count + '">' +
+        '<button type="button" class="plus" aria-label="One more player">+</button></div></div>' +
+        (party.length > 1 ? '<button type="button" class="btn danger grp-del" aria-label="Remove this level">Remove</button>' : "");
+      var sel = row.querySelector("select"), inp = row.querySelector("input");
+      sel.addEventListener("change", function () { g.level = clampLevel(sel.value); changed(); });
+      inp.addEventListener("input", function () {
+        g.count = inp.value === "" ? 0 : Math.min(12, Math.max(0, int(inp.value, 0)));
+        changed();
+      });
+      inp.addEventListener("blur", function () { inp.value = g.count; });
+      function bump(d) { g.count = Math.min(12, Math.max(0, g.count + d)); inp.value = g.count; changed(); }
+      row.querySelector(".minus").addEventListener("click", function () { bump(-1); });
+      row.querySelector(".plus").addEventListener("click", function () { bump(1); });
+      var del = row.querySelector(".grp-del");
+      if (del) del.addEventListener("click", function () {
+        party.splice(party.indexOf(g), 1);
+        renderParty();
+        changed();
+      });
+      box.appendChild(row);
+    });
   }
-  $("party-level").addEventListener("change", function (e) { activeTab().party.level = clampLevel(e.target.value); changed(); });
-  $("party-count").addEventListener("input", function (e) {
-    var v = e.target.value === "" ? 0 : Math.min(12, Math.max(0, int(e.target.value, 0)));
-    activeTab().party.count = v;
+  $("add-party-group").addEventListener("click", function () {
+    var party = activeTab().party, last = party[party.length - 1];
+    party.push({ level: last ? Math.max(1, last.level - 1) : 5, count: 1 });
+    renderParty();
     changed();
   });
-  $("party-count").addEventListener("blur", function () { $("party-count").value = activeTab().party.count; });
-  function bumpParty(d) {
-    var p = activeTab().party;
-    p.count = Math.min(12, Math.max(0, p.count + d));
-    $("party-count").value = p.count;
-    changed();
-  }
-  $("party-minus").addEventListener("click", function () { bumpParty(-1); });
-  $("party-plus").addEventListener("click", function () { bumpParty(1); });
 
   // ---------------------------------------------------------------- monsters
   function crOptions(selected) {
@@ -1130,7 +1148,8 @@
   // ---------------------------------------------------------------- readout
   function refreshReadout() {
     var r = compute(activeTab());
-    $("party-total").textContent = r.chars ? r.chars + " × level " + activeTab().party.level : "No players";
+    $("party-total").textContent = r.chars ? activeTab().party.filter(function (g) { return g.count > 0; })
+      .map(function (g) { return g.count + " × level " + g.level; }).join(" + ") : "No players";
     $("monster-total").textContent = fmt(r.xp) + " XP";
     $("tile-low").textContent = fmt(r.low);
     $("tile-moderate").textContent = fmt(r.mod);
