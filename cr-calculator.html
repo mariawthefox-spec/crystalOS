@@ -1,0 +1,1554 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Warrior of Light Log II</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --void: #080d17;
+    --panel: #0c161c;
+    --deep-teal: #0f2b30;
+    --crystal: #6df0e2;
+    --crystal-dim: #3f8f88;
+    --old-gold: #f2bd2d;
+    --gold-dim: #7a6832;
+    --ember: #ff4800;
+    --parchment: #a9c0bb;
+    --parchment-dim: #5f7772;
+    --routine: #5f9e8f;
+    --monitor: #7fb8c9;
+    --contain: #f90303;
+    --stable: #4ed98a;
+    --stable-shadow: rgba(78,217,138,0.5);
+    --focus: #6df0e2;
+    --shadow: 0 1px 2px rgba(0,0,0,0.5), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  /* This page commits to one look (the CrystalOS archive terminal) in both host themes. */
+
+  * { box-sizing: border-box; }
+
+  html, body { background: var(--void); }
+
+  body {
+    position: relative;
+    color: var(--parchment);
+    font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    padding: clamp(16px, 4vw, 40px);
+    padding-block: clamp(28px, 6vw, 56px);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode: overlay;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 220px rgba(0,0,0,0.65);
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none !important; }
+  }
+
+  .wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; position: relative; }
+
+  .console-head { display: flex; flex-direction: column; gap: 10px; }
+
+  .head-top { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .sigil-frame { flex-shrink: 0; }
+  .sigil-frame img {
+    display: block;
+    width: 68px;
+    height: 68px;
+    filter: drop-shadow(0 0 18px rgba(20,140,255,0.5));
+  }
+  .head-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
+
+  .eyebrow {
+    font-family: "Cormorant SC", serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--crystal-dim);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: "Orbitron", "JetBrains Mono", sans-serif;
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    margin: 0;
+    text-wrap: balance;
+    color: var(--parchment) ;
+    text-shadow: 0 0 18px rgba(111,232,220,0.35);
+  }
+  h1 .accent { color: var(--crystal); }
+
+  .status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--parchment-dim);
+  }
+  .status-row b { color: var(--parchment); font-weight: 700; }
+  .status-live { display: inline-flex; align-items: center; gap: 7px; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--stable);
+    box-shadow: 0 0 6px var(--stable-shadow);
+    display: inline-block;
+  }
+
+  hr.rule { border: none; border-top: 1px solid rgba(111,232,220,0.2); margin: 4px 0 0; }
+  .rule-ticks { display: flex; justify-content: space-between; margin-top: -1px; margin-bottom: 4px; opacity: 0.55; }
+  .rule-ticks span { width: 1px; height: 6px; background: var(--gold-dim); }
+
+  .query-line {
+    font-size: 13px;
+    color: var(--crystal-dim);
+    margin: 6px 0 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    overflow-wrap: anywhere;
+  }
+  .query-line > span:nth-child(2) { min-width: 0; }
+  .query-line .prompt { color: var(--old-gold); }
+  .query-line .cursor { animation: blink 1.1s steps(1) infinite; color: var(--crystal); }
+
+  .sub-note {
+    font-family: "Cormorant SC", serif;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    color: var(--parchment-dim);
+    margin: 2px 0 0;
+    font-style: italic;
+  }
+
+  /* ---------- Encounter tabs ---------- */
+  .session-block { display: flex; flex-direction: column; gap: 0; }
+  .tabs-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--crystal-dim);
+  }
+  .tab {
+    background: var(--panel);
+    border: 1px solid rgba(111,232,220,0.14);
+    border-bottom: none;
+    color: var(--parchment-dim);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--parchment); }
+  .tab[aria-selected="true"] {
+    color: var(--crystal);
+    background: var(--deep-teal);
+    border-color: var(--crystal-dim);
+    border-top: 2px solid var(--crystal);
+    border-bottom: 1px solid var(--deep-teal);
+  }
+  .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .tab-new {
+    background: none;
+    border: 1px dashed var(--crystal-dim);
+    border-bottom: none;
+    color: var(--crystal);
+    padding: 7px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: 0;
+  }
+  .tab-new:hover { background: rgba(111,232,220,0.08); }
+
+  .tab-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    padding: 12px 14px;
+    background: var(--deep-teal);
+    border: 1px solid var(--crystal-dim);
+    border-top: none;
+  }
+  .tab-tools .name-field { flex: 1 1 240px; min-width: 0; }
+  .tab-tools .tool-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  button.tool-btn {
+    background: var(--void);
+    color: var(--parchment);
+    border: 1px solid var(--crystal-dim);
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  button.tool-btn:hover { background: rgba(111,232,220,0.12); color: var(--crystal); }
+  button.tool-btn.danger:hover { background: rgba(249,3,3,0.12); color: var(--contain); border-color: var(--contain); }
+  button.tool-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: 18px;
+  }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid rgba(111,232,220,0.14);
+    border-left: 3px solid var(--card-sev, var(--monitor));
+    border-radius: 0;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+  .card.threat { --card-sev: var(--old-gold); }
+
+  .card .log-head, .results .log-head {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .log-id {
+    font-family: "Orbitron", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--card-sev, var(--monitor));
+  }
+  .card h2, .results h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin: 0;
+    color: var(--parchment);
+    flex: 1;
+  }
+  .card .count {
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    color: var(--parchment-dim);
+    display: block;
+    margin: -4px 0 0;
+  }
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--card-sev, var(--monitor));
+    color: var(--card-sev, var(--monitor));
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+
+  .rows { display: flex; flex-direction: column; gap: 8px; }
+
+  .row {
+    padding: 8px;
+    background: var(--deep-teal);
+    border: 1px solid rgba(111,232,220,0.12);
+    border-radius: 0;
+  }
+  .party-row { display: grid; align-items: center; gap: 8px; grid-template-columns: 1fr 122px; }
+
+  .monster-row { display: flex; flex-direction: column; gap: 8px; }
+  .mv-top { display: flex; flex-direction: column; }
+  .mv-bottom { display: grid; align-items: end; gap: 8px; grid-template-columns: 70px 84px 52px 1fr; }
+  @media (max-width: 420px) {
+    .mv-bottom { grid-template-columns: 1fr 1fr; }
+  }
+
+  label.field-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--parchment-dim);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  select, input[type="number"], input[type="text"] {
+    width: 100%;
+    background: var(--void);
+    color: var(--parchment);
+    border: 1px solid var(--crystal-dim);
+    border-radius: 0;
+    padding: 6px 8px;
+    font-size: 13.4px;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+  select option { background: var(--panel); color: var(--parchment); padding: 4px 6px; }
+  select:focus, input:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  /* Pairs an input/select with its row's remove button so the two are always
+     centered against EACH OTHER, never against a label that only one of them has. */
+  .field-with-remove { display: flex; gap: 8px; align-items: center; }
+  .field-with-remove select,
+  .field-with-remove input { flex: 1; min-width: 0; width: auto; }
+  .field-with-remove .icon-btn { flex-shrink: 0; }
+
+  .xp-sub {
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--parchment-dim);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  button.icon-btn {
+    width: 28px; height: 28px;
+    border-radius: 0;
+    border: 1px solid var(--crystal-dim);
+    background: var(--void);
+    color: var(--parchment-dim);
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  button.icon-btn:hover { background: rgba(249,3,3,0.12); color: var(--contain); border-color: var(--contain); }
+
+  button.add-btn {
+    align-self: flex-start;
+    margin-top: auto;
+    background: rgba(111,232,220,0.08);
+    color: var(--crystal);
+    border: 1px solid var(--crystal-dim);
+    border-radius: 0;
+    padding: 7px 12px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.add-btn:hover { background: rgba(111,232,220,0.16); }
+
+  .toolbar { display: flex; justify-content: flex-end; }
+  button.clear-btn {
+    background: none; border: none;
+    color: var(--parchment-dim);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+    font-family: inherit;
+  }
+  button.clear-btn:hover { color: var(--contain); }
+
+  .results {
+    background: var(--panel);
+    border: 1px solid rgba(111,232,220,0.14);
+    border-left: 3px solid var(--old-gold);
+    border-radius: 0;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .results .log-id { color: var(--old-gold); }
+
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 560px) { .tiles { grid-template-columns: 1fr; } }
+  .tile {
+    padding: 10px 12px;
+    border: 1px solid rgba(111,232,220,0.14);
+    background: var(--deep-teal);
+    border-left: 3px solid var(--border-strong, var(--crystal-dim));
+  }
+  .tile .tile-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--parchment-dim); }
+  .tile .tile-value { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; font-family: "Orbitron", monospace; }
+  .tile.low { border-left-color: var(--routine); }
+  .tile.low .tile-value { color: var(--routine); }
+  .tile.moderate { border-left-color: var(--old-gold); }
+  .tile.moderate .tile-value { color: var(--old-gold); }
+  .tile.high { border-left-color: var(--ember); }
+  .tile.high .tile-value { color: var(--ember); }
+
+  .gauge-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .gauge-track {
+    position: relative;
+    height: 22px;
+    overflow: hidden;
+    display: flex;
+    border: 1px solid rgba(111,232,220,0.2);
+  }
+  .gauge-seg { height: 100%; }
+  .gauge-seg.trivial { background: var(--deep-teal); }
+  .gauge-seg.low { background: rgba(95,158,143,0.22); }
+  .gauge-seg.moderate { background: rgba(242,189,45,0.18); }
+  .gauge-seg.high { background: rgba(255,72,0,0.18); }
+  .gauge-marker {
+    position: absolute; top: -4px; bottom: -4px; width: 2px;
+    background: var(--crystal);
+    box-shadow: 0 0 6px rgba(111,232,220,0.6);
+    transition: left 0.15s ease;
+  }
+  .gauge-marker::after {
+    content: attr(data-xp);
+    position: absolute; top: -22px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--crystal);
+  }
+  .gauge-labels { display: flex; font-size: 10px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--parchment-dim); position: relative; height: 14px; }
+  .gauge-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+
+  .verdict {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid var(--sev-color, var(--parchment-dim));
+    border-left: 3px solid var(--sev-color, var(--parchment-dim));
+    background: var(--deep-teal);
+  }
+  .verdict.trivial { --sev-color: var(--parchment-dim); }
+  .verdict.low { --sev-color: var(--routine); }
+  .verdict.moderate { --sev-color: var(--old-gold); }
+  .verdict.high { --sev-color: var(--ember); }
+  .verdict.extreme { --sev-color: var(--contain); background: rgba(249,3,3,0.08); }
+  .verdict-eyebrow-row { display: flex; align-items: center; gap: 10px; }
+  .verdict .verdict-eyebrow { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--parchment-dim); }
+  .verdict-tag {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid var(--sev-color, var(--parchment-dim));
+    color: var(--sev-color, var(--parchment-dim));
+    padding: 1px 6px; border-radius: 2px;
+  }
+  .verdict .verdict-title {
+    font-family: "Orbitron", monospace;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    margin: 2px 0 0;
+    color: var(--parchment);
+  }
+  .verdict .verdict-body { margin: 2px 0 0; color: var(--parchment-dim); font-size: 13px; line-height: 1.55; }
+  .verdict .verdict-body::before { content: "\21B3  "; color: var(--crystal-dim); }
+
+  .recovered-fragment {
+    border: 1px dashed rgba(111,232,220,0.3);
+    border-radius: 2px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .frag-tag {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--crystal-dim);
+    border: 1px solid var(--crystal-dim);
+    padding: 1px 6px; border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .frag-line { margin: 0; font-size: 12px; color: var(--parchment-dim); }
+
+  footer.foot {
+    padding-top: 14px;
+  }
+  .foot-line { margin: 0; font-size: 11px; letter-spacing: 0.03em; color: var(--parchment); text-transform: uppercase; }
+  .foot-sub { margin: 4px 0 0; font-size: 11px; color: var(--parchment-dim); }
+
+  /* Layout: adventure index (summary) on top, then one encounter workspace:
+     inputs on the left, readout pinned on the right so the verdict stays in view while editing. */
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid rgba(111,232,220,0.14);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .panel-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .panel-head .log-id { color: var(--crystal); }
+  .panel-head h2 { font-family: "JetBrains Mono", monospace; font-size: 14px; font-weight: 500; margin: 0; color: var(--parchment); flex: 1; min-width: 0; }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .bar .grow { flex: 1 1 200px; min-width: 0; }
+  .bar .fixed { flex: 0 1 210px; min-width: 150px; }
+
+  /* Buttons: one primary style, one quiet style, one destructive text style. */
+  button.btn {
+    min-height: 36px;
+    background: rgba(111,232,220,0.08);
+    color: var(--crystal);
+    border: 1px solid var(--crystal-dim);
+    padding: 7px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button.btn:hover { background: rgba(111,232,220,0.16); }
+  button.btn.quiet { background: var(--void); color: var(--parchment); }
+  button.btn.quiet:hover { color: var(--crystal); }
+  button.btn.danger { background: none; border-color: transparent; color: var(--parchment-dim); text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+  button.btn.danger:hover { color: var(--contain); }
+  button.btn.danger[data-armed="1"] { color: var(--contain); border-color: var(--contain); text-decoration: none; background: rgba(249,3,3,0.1); }
+  button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  button.icon-btn { width: 36px; height: 36px; font-size: 1.05rem; }
+
+  select, input[type="number"], input[type="text"] { min-height: 36px; }
+
+  /* ---------- Encounter cards (these are the tabs) ---------- */
+  .ov-summary { font-size: 11px; color: var(--parchment-dim); letter-spacing: 0.03em; margin: 0; }
+  .enc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .enc {
+    --sev: var(--parchment-dim);
+    position: relative;
+    text-align: left;
+    background: var(--deep-teal);
+    border: 1px solid rgba(111,232,220,0.12);
+    border-left: 3px solid var(--sev);
+    padding: 9px 11px;
+    color: var(--parchment);
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    min-height: 68px;
+  }
+  .enc:hover { border-color: var(--crystal-dim); border-left-color: var(--sev); }
+  .enc[aria-selected="true"] { background: rgba(111,232,220,0.1); border-color: var(--crystal); border-left-color: var(--sev); box-shadow: 0 0 0 1px var(--crystal) inset; }
+  .enc-name { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .enc-meta { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
+  .enc-band { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sev); }
+  .enc-xp { font-size: 11px; color: var(--parchment-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .enc-adv { font-size: 10px; color: var(--parchment-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .enc.new { border: 1px dashed var(--crystal-dim); color: var(--crystal); justify-content: center; align-items: center; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; background: none; }
+  .enc.new:hover { background: rgba(111,232,220,0.08); }
+  .sev-pending { --sev: var(--parchment-dim); }
+  .sev-trivial { --sev: var(--parchment-dim); }
+  .sev-low { --sev: var(--routine); }
+  .sev-moderate { --sev: var(--old-gold); }
+  .sev-high { --sev: var(--ember); }
+  .sev-extreme { --sev: var(--contain); }
+
+  /* ---------- Workspace ---------- */
+  .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+  .workspace .side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  @media (max-width: 880px) {
+    .workspace { grid-template-columns: minmax(0, 1fr); }
+    .workspace .side { position: static; }
+  }
+  .main-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .party-line { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .party-line .lvl { flex: 0 1 140px; min-width: 120px; }
+  .party-total { font-size: 12px; color: var(--parchment-dim); margin-left: auto; align-self: center; font-variant-numeric: tabular-nums; }
+
+  /* Number stepper: bigger tap targets than the browser's spinner arrows. */
+  .stepper { display: inline-flex; align-items: stretch; }
+  .stepper button {
+    width: 34px; min-height: 36px;
+    background: var(--void); color: var(--parchment);
+    border: 1px solid var(--crystal-dim);
+    font-family: inherit; font-size: 15px; cursor: pointer;
+  }
+  .stepper button:hover { color: var(--crystal); background: rgba(111,232,220,0.1); }
+  .stepper input { width: 52px; text-align: center; border-left: none; border-right: none; -moz-appearance: textfield; }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* CR / XP segmented switch */
+  .seg { display: inline-flex; border: 1px solid var(--crystal-dim); }
+  .seg button {
+    min-height: 34px; padding: 0 10px;
+    background: var(--void); color: var(--parchment-dim);
+    border: none; font-family: inherit; font-size: 11px; letter-spacing: 0.06em; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(111,232,220,0.16); color: var(--crystal); }
+
+  .monster-row { display: flex; flex-direction: column; gap: 8px; }
+  .mv-bottom { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .mv-bottom .val { flex: 1 1 96px; min-width: 90px; max-width: 140px; }
+  .mv-bottom .xp-sub { margin-left: auto; }
+
+  .empty { font-size: 12px; color: var(--parchment-dim); margin: 0; padding: 14px; border: 1px dashed rgba(111,232,220,0.2); line-height: 1.5; }
+  .card-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card-foot .add-btn { margin-top: 0; }
+
+  .results { gap: 14px; }
+  .results .tiles { grid-template-columns: repeat(3, 1fr); }
+  .results .tile { padding: 8px 10px; }
+  .results .tile .tile-value { font-size: 1.05rem; }
+  @media (max-width: 380px) { .results .tiles { grid-template-columns: 1fr; } }
+  .gauge-wrap { padding-top: 18px; }
+
+  /* ---------- Backup ---------- */
+  details.backup { border: 1px dashed rgba(111,232,220,0.3); padding: 0 14px; }
+  details.backup summary { cursor: pointer; padding: 12px 0; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--crystal-dim); list-style-position: inside; }
+  details.backup summary:hover { color: var(--crystal); }
+  details.backup[open] { padding-bottom: 14px; }
+  .backup-body { display: flex; flex-direction: column; gap: 10px; }
+  .backup textarea {
+    width: 100%; min-height: 120px;
+    background: var(--void); color: var(--parchment);
+    border: 1px solid var(--crystal-dim);
+    font-family: inherit; font-size: 12px; padding: 8px; resize: vertical;
+  }
+  .backup textarea:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .backup p { margin: 0; font-size: 12px; color: var(--parchment-dim); line-height: 1.5; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    max-width: calc(100% - 32px);
+    background: var(--deep-teal); color: var(--parchment);
+    border: 1px solid var(--crystal-dim);
+    box-shadow: var(--shadow);
+    padding: 10px 12px 10px 14px;
+    display: flex; gap: 12px; align-items: center;
+    font-size: 12px; z-index: 10;
+  }
+  .toast .btn { min-height: 30px; padding: 4px 10px; }
+  .gauge-marker::after { transform: translateX(var(--shift, -50%)); }
+  span.field-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--parchment-dim); display: block; margin-bottom: 2px; }
+  .gauge-track { overflow: visible; }
+  .toast[hidden] { display: none; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Cormorant+SC:wght@500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<div class="wrap">
+  <div class="console-head">
+    <div class="head-top">
+      <div class="sigil-frame"><img src="sigil.gif" alt=""></div>
+      <div class="head-text">
+        <p class="eyebrow">CrystalOS — Ancients Archive Access</p>
+        <h1>Warrior of Light <span class="accent">— Pattern Test Log</span></h1>
+        <div class="status-row">
+          <span class="status-live"><span class="dot"></span>TAP <b>STABLE</b></span>
+          <span>AUTH <b>CETRA-INTERNAL</b></span>
+          <span>CHANNEL <b>CALAMITY_5</b></span>
+          <span title="Your log is kept only in this browser on this device">SYNC <b id="sync-state">LOCAL ONLY</b></span>
+        </div>
+      </div>
+    </div>
+    <hr class="rule">
+    <div class="rule-ticks">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <p class="query-line"><span class="prompt">&gt;</span><span>query --cohort=warrior_of_light --metric=engagement_threshold --session=<span id="query-session">test_01</span></span><span class="cursor">&#9608;</span></p>
+  </div>
+
+  <section class="panel" aria-label="Adventures and encounters">
+    <div class="panel-head">
+      <span class="log-id">AD&ndash;01</span>
+      <h2>Adventure Index</h2>
+    </div>
+    <div class="bar">
+      <div class="grow">
+        <label class="field-label" for="adv-filter">Adventure</label>
+        <select id="adv-filter"></select>
+      </div>
+      <div class="grow" id="adv-name-wrap">
+        <label class="field-label" for="adv-name">Rename adventure</label>
+        <input type="text" id="adv-name" maxlength="60" placeholder="Name this adventure">
+      </div>
+      <button class="btn" id="adv-new" type="button">+ New adventure</button>
+      <button class="btn danger" id="adv-del" type="button">Delete adventure</button>
+    </div>
+    <p class="ov-summary" id="ov-summary"></p>
+    <div class="enc-grid" id="enc-grid" role="tablist" aria-label="Encounters"></div>
+  </section>
+
+  <section class="panel" aria-label="Selected encounter">
+    <div class="bar">
+      <div class="grow">
+        <label class="field-label" for="tab-name">Encounter name</label>
+        <input type="text" id="tab-name" maxlength="60" placeholder="Name this encounter">
+      </div>
+      <div class="fixed">
+        <label class="field-label" for="tab-adv">Belongs to</label>
+        <select id="tab-adv"></select>
+      </div>
+      <button class="btn quiet" id="dup-tab" type="button">Duplicate</button>
+      <button class="btn danger" id="del-tab" type="button">Delete encounter</button>
+    </div>
+
+    <div class="workspace">
+      <div class="main-col">
+        <section class="card" aria-label="Subject cohort">
+          <div class="log-head">
+            <span class="log-id">SC&ndash;01</span>
+            <h2>Warriors of Light</h2>
+            <span class="tag">Monitor</span>
+          </div>
+          <div class="party-line">
+            <div class="lvl">
+              <label class="field-label" for="party-level">Party level</label>
+              <select id="party-level"></select>
+            </div>
+            <div>
+              <label class="field-label" for="party-count">Players present</label>
+              <div class="stepper">
+                <button type="button" id="party-minus" aria-label="One fewer player">&minus;</button>
+                <input type="number" id="party-count" min="0" max="12" step="1" inputmode="numeric">
+                <button type="button" id="party-plus" aria-label="One more player">+</button>
+              </div>
+            </div>
+            <span class="party-total" id="party-total"></span>
+          </div>
+        </section>
+
+        <section class="card threat" aria-label="Threat vectors">
+          <div class="log-head">
+            <span class="log-id">TV&ndash;01</span>
+            <h2>Threat Vector Log</h2>
+            <span class="tag" id="monster-total">0 XP</span>
+          </div>
+          <div class="rows" id="monster-rows"></div>
+          <div class="card-foot">
+            <button class="add-btn" id="add-monster-row" type="button">+ Log hostile vector</button>
+            <button class="btn danger" id="clear-all" type="button">Clear all vectors</button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="results" aria-label="Readout">
+          <div class="log-head">
+            <span class="log-id">RD&ndash;01</span>
+            <h2>Threshold Readout</h2>
+          </div>
+          <div class="verdict" id="verdict" aria-live="polite">
+            <div class="verdict-eyebrow-row">
+              <span class="verdict-eyebrow">Cetra Classification</span>
+              <span class="verdict-tag" id="verdict-tag">—</span>
+            </div>
+            <p class="verdict-title" id="verdict-title"><span>—</span></p>
+            <p class="verdict-body" id="verdict-body">Log hostile vectors to generate a readout.</p>
+          </div>
+          <div class="gauge-wrap">
+            <div class="gauge-track" id="gauge-track">
+              <div class="gauge-seg trivial" id="seg-trivial"></div>
+              <div class="gauge-seg low" id="seg-low"></div>
+              <div class="gauge-seg moderate" id="seg-moderate"></div>
+              <div class="gauge-seg high" id="seg-high"></div>
+              <div class="gauge-marker" id="gauge-marker" data-xp="0"></div>
+            </div>
+            <div class="gauge-labels" id="gauge-labels"></div>
+          </div>
+          <div class="tiles">
+            <div class="tile low"><div class="tile-label">Low</div><div class="tile-value" id="tile-low">0</div></div>
+            <div class="tile moderate"><div class="tile-label">Moderate</div><div class="tile-value" id="tile-moderate">0</div></div>
+            <div class="tile high"><div class="tile-label">High</div><div class="tile-value" id="tile-high">0</div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <details class="backup" id="backup">
+    <summary>Backup &amp; transfer</summary>
+    <div class="backup-body">
+      <p>This log lives only in this browser on this device. Clearing browser data erases it, so export a backup now and then. Copy your whole log out as text to keep a backup, or paste in a log exported from the older version of this terminal. Imported encounters are added next to your existing ones.</p>
+      <div class="bar">
+        <button class="btn quiet" id="export-btn" type="button">Export log</button>
+        <button class="btn quiet" id="import-btn" type="button">Import log</button>
+      </div>
+      <div id="export-wrap" hidden>
+        <label class="field-label" for="export-text">Your log</label>
+        <textarea id="export-text" readonly></textarea>
+        <div class="bar" style="margin-top:8px"><button class="btn" id="copy-btn" type="button">Copy to clipboard</button></div>
+      </div>
+      <div id="import-wrap" hidden>
+        <label class="field-label" for="import-text">Paste a log here</label>
+        <textarea id="import-text" placeholder="Paste the exported text here"></textarea>
+        <div class="bar" style="margin-top:8px"><button class="btn" id="import-go" type="button">Import</button></div>
+      </div>
+      <p id="backup-msg" aria-live="polite"></p>
+    </div>
+  </details>
+
+  <footer class="foot">
+    <hr class="rule">
+    <p class="foot-line" style="margin-top:12px;">CrystalOS / Ancients Archive &mdash; Calamity 5 data intake, Warrior of Light pattern-test subroutine</p>
+    <p class="foot-sub">XP-threshold and CR-value tables per the 2024 rules, kept here as local reference only.</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button class="btn quiet" id="toast-undo" type="button" hidden>Undo</button></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var XP_BY_LEVEL = {
+    1:[50,75,100], 2:[100,150,200], 3:[150,225,400], 4:[250,375,500],
+    5:[500,750,1100], 6:[600,1000,1400], 7:[750,1300,1700], 8:[1000,1700,2100],
+    9:[1300,2000,2600], 10:[1600,2300,3100], 11:[1900,2900,4100], 12:[2200,3700,4700],
+    13:[2600,4200,5400], 14:[2900,4900,6200], 15:[3300,5400,7800], 16:[3800,6100,9800],
+    17:[4500,7200,11700], 18:[5000,8700,14200], 19:[5500,10700,17200], 20:[6400,13200,22000]
+  };
+  var CR_ORDER = ["0","1/8","1/4","1/2","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"];
+  var CR_TO_XP = {
+    "0":10, "1/8":25, "1/4":50, "1/2":100, "1":200, "2":450, "3":700, "4":1100,
+    "5":1800, "6":2300, "7":2900, "8":3900, "9":5000, "10":5900, "11":7200, "12":8400,
+    "13":10000, "14":11500, "15":13000, "16":15000, "17":18000, "18":20000, "19":22000, "20":25000,
+    "21":33000, "22":41000, "23":50000, "24":62000, "25":75000, "26":90000, "27":105000, "28":120000,
+    "29":135000, "30":155000
+  };
+  var BAND_LABEL = { pending: "No vectors", trivial: "Below Low", low: "Low", moderate: "Moderate", high: "High", extreme: "Beyond High" };
+
+  var LS_KEY = "wol-player-log-v1";
+  var ALL = "__all", NONE = "__none";
+  var seq = 0;
+  var state = null;
+
+  function $(id) { return document.getElementById(id); }
+  function uid(p) { return p + Date.now().toString(36) + (seq++).toString(36) + Math.random().toString(36).slice(2, 6); }
+  function fmt(n) { return Math.round(n).toLocaleString("en-US"); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function int(v, d) { var n = parseInt(v, 10); return isNaN(n) ? d : n; }
+  function clampLevel(v) { return Math.min(20, Math.max(1, int(v, 1))); }
+
+  // ---------------------------------------------------------------- toast (with optional undo)
+  var toastTimer = null, toastUndo = null;
+  function toast(text, undoFn) {
+    $("toast-text").textContent = text;
+    toastUndo = undoFn || null;
+    $("toast-undo").hidden = !undoFn;
+    $("toast").hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $("toast").hidden = true; toastUndo = null; }, undoFn ? 6000 : 3500);
+  }
+  $("toast-undo").addEventListener("click", function () {
+    var fn = toastUndo;
+    $("toast").hidden = true; toastUndo = null;
+    if (fn) fn();
+  });
+
+  // ---------------------------------------------------------------- state
+  function newTab(name, advId, party) {
+    return { id: uid("t"), name: name, adventureId: advId || null, party: party || { level: 5, count: 4 }, monsters: [] };
+  }
+  function defaultState() {
+    var t = newTab("Test 01", null, { level: 5, count: 4 });
+    return { v: 4, adventures: [], tabs: [t], active: t.id, filter: ALL, pristine: true };
+  }
+
+  // Older saves stored the party as level tiers (v2) or as a named roster with no-shows (v3).
+  // Fold either into one level + one head count.
+  function toParty(t, roster) {
+    if (t.party && !Array.isArray(t.party) && t.party.level != null) {
+      return { level: clampLevel(t.party.level), count: Math.max(0, int(t.party.count, 0)) };
+    }
+    var tiers = [];
+    if (Array.isArray(t.party)) {
+      t.party.forEach(function (p) { tiers.push({ level: clampLevel(p.level), count: Math.max(0, int(p.count, 0)) }); });
+    } else if (Array.isArray(roster) && roster.length) {
+      var absent = Array.isArray(t.absent) ? t.absent : [];
+      roster.forEach(function (m) { if (absent.indexOf(m.id) === -1) tiers.push({ level: clampLevel(m.level), count: 1 }); });
+      (t.guests || []).forEach(function (g) { tiers.push({ level: clampLevel(g.level), count: Math.max(0, int(g.count, 0)) }); });
+    }
+    if (!tiers.length) return { level: 5, count: 4 };
+    var byLevel = {}, total = 0, best = tiers[0].level;
+    tiers.forEach(function (x) { byLevel[x.level] = (byLevel[x.level] || 0) + x.count; total += x.count; });
+    Object.keys(byLevel).forEach(function (l) { if (byLevel[l] > (byLevel[best] || 0)) best = +l; });
+    return { level: best, count: total };
+  }
+
+  function cleanMonsters(list) {
+    return (Array.isArray(list) ? list : []).map(function (m) {
+      return { id: m.id || uid("m"), label: m.label || "", mode: m.mode === "xp" ? "xp" : "cr", value: m.value != null ? m.value : "1", count: m.count || 1 };
+    });
+  }
+
+  function normalize(s) {
+    if (!s || typeof s !== "object") return defaultState();
+    var roster = s.roster;
+    var out = { v: 4, pristine: !!s.pristine, filter: s.filter, active: s.active };
+    out.adventures = (Array.isArray(s.adventures) ? s.adventures : []).filter(function (a) { return a && a.id; })
+      .map(function (a) { return { id: a.id, name: typeof a.name === "string" ? a.name : "Adventure" }; });
+    var advIds = out.adventures.map(function (a) { return a.id; });
+    out.tabs = (Array.isArray(s.tabs) ? s.tabs : []).filter(function (t) { return t && t.id; }).map(function (t) {
+      return {
+        id: t.id,
+        name: typeof t.name === "string" && t.name ? t.name : "Untitled",
+        adventureId: advIds.indexOf(t.adventureId) === -1 ? null : t.adventureId,
+        party: toParty(t, roster),
+        monsters: cleanMonsters(t.monsters)
+      };
+    });
+    if (!out.tabs.length) out.tabs.push(newTab("Test 01"));
+    if (out.filter !== ALL && out.filter !== NONE && advIds.indexOf(out.filter) === -1) out.filter = ALL;
+    if (!out.tabs.some(function (t) { return t.id === out.active; })) out.active = out.tabs[0].id;
+    if (!visibleTabsOf(out).some(function (t) { return t.id === out.active; })) out.filter = ALL;
+    return out;
+  }
+
+  function visibleTabsOf(s) {
+    return s.tabs.filter(function (t) {
+      if (s.filter === ALL) return true;
+      if (s.filter === NONE) return !t.adventureId;
+      return t.adventureId === s.filter;
+    });
+  }
+  function visibleTabs() { return visibleTabsOf(state); }
+  function activeTab() {
+    for (var i = 0; i < state.tabs.length; i++) if (state.tabs[i].id === state.active) return state.tabs[i];
+    return state.tabs[0];
+  }
+  function advById(id) {
+    for (var i = 0; i < state.adventures.length; i++) if (state.adventures[i].id === id) return state.adventures[i];
+    return null;
+  }
+
+  // ---------------------------------------------------------------- maths
+  function monsterXp(m) { return m.mode === "xp" ? (parseFloat(m.value) || 0) : (CR_TO_XP[m.value] || 0); }
+
+  function compute(tab) {
+    var b = XP_BY_LEVEL[tab.party.level] || [0, 0, 0];
+    var n = Math.max(0, int(tab.party.count, 0));
+    var low = b[0] * n, mod = b[1] * n, high = b[2] * n, xp = 0;
+    tab.monsters.forEach(function (m) { xp += monsterXp(m) * Math.max(0, int(m.count, 0)); });
+    var band;
+    if (n === 0 || xp === 0) band = "pending";
+    else if (xp < low) band = "trivial";
+    else if (xp < mod) band = "low";
+    else if (xp < high) band = "moderate";
+    else if (xp <= high * 1.5) band = "high";
+    else band = "extreme";
+    return { low: low, mod: mod, high: high, chars: n, xp: xp, band: band };
+  }
+
+  function changed() {
+    state.pristine = false;
+    refreshReadout();
+    renderEncounters();
+    save();
+  }
+
+  // ---------------------------------------------------------------- party (one line)
+  function levelOptions(selected) {
+    var out = "";
+    for (var l = 1; l <= 20; l++) out += '<option value="' + l + '"' + (l === selected ? " selected" : "") + ">Level " + l + "</option>";
+    return out;
+  }
+  function renderParty() {
+    var p = activeTab().party;
+    $("party-level").innerHTML = levelOptions(p.level);
+    if (document.activeElement !== $("party-count")) $("party-count").value = p.count;
+  }
+  $("party-level").addEventListener("change", function (e) { activeTab().party.level = clampLevel(e.target.value); changed(); });
+  $("party-count").addEventListener("input", function (e) {
+    var v = e.target.value === "" ? 0 : Math.min(12, Math.max(0, int(e.target.value, 0)));
+    activeTab().party.count = v;
+    changed();
+  });
+  $("party-count").addEventListener("blur", function () { $("party-count").value = activeTab().party.count; });
+  function bumpParty(d) {
+    var p = activeTab().party;
+    p.count = Math.min(12, Math.max(0, p.count + d));
+    $("party-count").value = p.count;
+    changed();
+  }
+  $("party-minus").addEventListener("click", function () { bumpParty(-1); });
+  $("party-plus").addEventListener("click", function () { bumpParty(1); });
+
+  // ---------------------------------------------------------------- monsters
+  function crOptions(selected) {
+    var out = "";
+    CR_ORDER.forEach(function (cr) { out += '<option value="' + cr + '"' + (cr === selected ? " selected" : "") + ">CR " + cr + "</option>"; });
+    return out;
+  }
+
+  function renderMonsters() {
+    var el = $("monster-rows");
+    el.innerHTML = "";
+    var list = activeTab().monsters;
+    if (!list.length) {
+      var p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "No hostile vectors logged for this encounter. Add each monster type with its CR (or XP) and how many there are.";
+      el.appendChild(p);
+      return;
+    }
+    list.forEach(addMonsterRow);
+  }
+
+  function addMonsterRow(m) {
+    var id = "m-" + m.id;
+    var row = document.createElement("div");
+    row.className = "row monster-row";
+    row.innerHTML =
+      '<div class="field-with-remove">' +
+      '<input type="text" id="' + id + '-label" aria-label="Vector name" placeholder="Name, e.g. Goblin archer" value="' + esc(m.label) + '">' +
+      '<button class="icon-btn" type="button" aria-label="Remove this vector" title="Remove">&times;</button></div>' +
+      '<div class="mv-bottom">' +
+      '<div><span class="field-label">Enter by</span><div class="seg" role="group" aria-label="Enter by">' +
+      '<button type="button" data-mode="cr">CR</button><button type="button" data-mode="xp">XP</button></div></div>' +
+      '<div class="val"><label class="field-label" for="' + id + '-value">Value</label><div class="value-wrap"></div></div>' +
+      '<div><label class="field-label" for="' + id + '-count">Count</label>' +
+      '<div class="stepper"><button type="button" data-d="-1" aria-label="One fewer">&minus;</button>' +
+      '<input type="number" id="' + id + '-count" min="1" step="1" inputmode="numeric" value="' + esc(m.count) + '">' +
+      '<button type="button" data-d="1" aria-label="One more">+</button></div></div>' +
+      '<div class="xp-sub"><span class="field-label" style="text-align:right">Subtotal</span><span class="sub">0 XP</span></div>' +
+      "</div>";
+    $("monster-rows").appendChild(row);
+
+    var sub = row.querySelector(".sub");
+    var countEl = row.querySelector("#" + id + "-count");
+    function updSub() { sub.textContent = fmt(monsterXp(m) * Math.max(0, int(m.count, 0))) + " XP"; }
+    var valueWrap = row.querySelector(".value-wrap");
+    function renderValue() {
+      row.querySelectorAll(".seg button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.mode === m.mode ? "true" : "false"); });
+      if (m.mode === "xp") {
+        valueWrap.innerHTML = '<input type="number" id="' + id + '-value" min="0" step="5" inputmode="numeric" value="' + esc(m.value) + '">';
+        valueWrap.firstChild.addEventListener("input", function (e) { m.value = e.target.value; updSub(); changed(); });
+      } else {
+        if (!CR_TO_XP.hasOwnProperty(m.value)) m.value = "1";
+        valueWrap.innerHTML = '<select id="' + id + '-value">' + crOptions(m.value) + "</select>";
+        valueWrap.firstChild.addEventListener("change", function (e) { m.value = e.target.value; updSub(); changed(); });
+      }
+    }
+    renderValue();
+    updSub();
+    row.querySelectorAll(".seg button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (m.mode === b.dataset.mode) return;
+        // Keep the same XP when switching, so nothing jumps.
+        var xp = monsterXp(m);
+        m.mode = b.dataset.mode;
+        if (m.mode === "xp") m.value = xp;
+        else {
+          var best = "1";
+          CR_ORDER.forEach(function (cr) { if (CR_TO_XP[cr] <= xp) best = cr; });
+          m.value = best;
+        }
+        renderValue(); updSub(); changed();
+      });
+    });
+    countEl.addEventListener("input", function (e) { m.count = e.target.value; updSub(); changed(); });
+    countEl.addEventListener("blur", function () { if (int(m.count, 0) < 1) { m.count = 1; countEl.value = 1; updSub(); changed(); } });
+    row.querySelectorAll(".stepper button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        m.count = Math.max(1, int(m.count, 1) + int(b.dataset.d, 0));
+        countEl.value = m.count; updSub(); changed();
+      });
+    });
+    row.querySelector("#" + id + "-label").addEventListener("input", function (e) { m.label = e.target.value; changed(); });
+    row.querySelector(".icon-btn").addEventListener("click", function () {
+      var t = activeTab();
+      var idx = t.monsters.indexOf(m);
+      t.monsters.splice(idx, 1);
+      renderMonsters();
+      changed();
+      toast("Removed " + (m.label ? "“" + m.label + "”" : "vector") + ".", function () {
+        if (t.monsters.indexOf(m) === -1) t.monsters.splice(Math.min(idx, t.monsters.length), 0, m);
+        if (activeTab() === t) renderMonsters();
+        changed();
+      });
+    });
+  }
+
+  $("add-monster-row").addEventListener("click", function () {
+    var t = activeTab();
+    var m = { id: uid("m"), label: "", mode: "cr", value: "1", count: 1 };
+    t.monsters.push(m);
+    if (t.monsters.length === 1) $("monster-rows").innerHTML = "";
+    addMonsterRow(m);
+    changed();
+    var inp = $("m-" + m.id + "-label");
+    if (inp) inp.focus();
+  });
+
+  $("clear-all").addEventListener("click", function (e) {
+    var t = activeTab();
+    if (!t.monsters.length) return;
+    armed(e.currentTarget, "Clear all vectors", "Click again to clear", function () {
+      var old = t.monsters;
+      t.monsters = [];
+      renderMonsters();
+      changed();
+      toast("Cleared " + old.length + (old.length === 1 ? " vector." : " vectors."), function () {
+        t.monsters = old;
+        if (activeTab() === t) renderMonsters();
+        changed();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------- readout
+  function refreshReadout() {
+    var r = compute(activeTab());
+    $("party-total").textContent = r.chars ? r.chars + " × level " + activeTab().party.level : "No players";
+    $("monster-total").textContent = fmt(r.xp) + " XP";
+    $("tile-low").textContent = fmt(r.low);
+    $("tile-moderate").textContent = fmt(r.mod);
+    $("tile-high").textContent = fmt(r.high);
+
+    var scaleMax = Math.max(r.high * 1.4, 100);
+    var pT = (r.low / scaleMax) * 100, pL = ((r.mod - r.low) / scaleMax) * 100, pM = ((r.high - r.mod) / scaleMax) * 100;
+    $("seg-trivial").style.width = Math.max(pT, 0) + "%";
+    $("seg-low").style.width = Math.max(pL, 0) + "%";
+    $("seg-moderate").style.width = Math.max(pM, 0) + "%";
+    $("seg-high").style.width = Math.max(100 - pT - pL - pM, 0) + "%";
+    var marker = $("gauge-marker");
+    var pct = Math.min((r.xp / scaleMax) * 100, 100);
+    marker.style.left = "calc(" + pct + "% - 1px)";
+    marker.setAttribute("data-xp", fmt(r.xp) + " XP");
+    marker.style.setProperty("--shift", pct > 80 ? "-90%" : pct < 12 ? "-10%" : "-50%");
+    function labelAt(v, text) { return '<span style="left:' + Math.min((v / scaleMax) * 100, 100) + '%">' + text + "</span>"; }
+    $("gauge-labels").innerHTML = labelAt(r.low, "Low") + labelAt(r.mod, "Mod") + labelAt(r.high, "High");
+
+    var band, tag, title, body;
+    if (r.chars === 0) {
+      band = "trivial"; tag = "Archival"; title = "Awaiting subject data"; body = "Set how many players are present to establish an engagement threshold.";
+    } else if (r.xp === 0) {
+      band = "trivial"; tag = "Archival"; title = "Awaiting vector data"; body = "Log at least one hostile vector to project exposure.";
+    } else if (r.band === "trivial") {
+      band = "trivial"; tag = "Archival"; title = "Negligible yield"; body = "Below the Low threshold (" + fmt(r.low) + " XP). Cohort resistance data would be statistically negligible.";
+    } else if (r.band === "low") {
+      band = "low"; tag = "Routine"; title = "Low-yield data"; body = "Between Low and Moderate. Measurable but minor resource expenditure; a usable baseline read.";
+    } else if (r.band === "moderate") {
+      band = "moderate"; tag = "Contested"; title = "Viable test conditions"; body = "Between Moderate and High. Genuine resource drain; a strong candidate for pattern-confirming data.";
+    } else if (r.band === "high") {
+      band = "high"; tag = "Sensitive"; title = "High-yield test"; body = "At or above High (" + fmt(r.high) + " XP). Significant subject attrition risk; high value regardless of outcome.";
+    } else {
+      band = "extreme"; tag = "Manual admin approval"; title = "Subject loss probable"; body = "Far past the High threshold. Elevated probability of subject termination. Flag before running: data value does not by itself justify this exposure.";
+    }
+    $("verdict").className = "verdict " + band;
+    $("verdict-tag").textContent = tag;
+    $("verdict-title").innerHTML = "<span>" + title + "</span>";
+    $("verdict-body").textContent = body;
+  }
+
+  // ---------------------------------------------------------------- adventures + encounter cards
+  function filterLabel() {
+    if (state.filter === ALL) return "All encounters";
+    if (state.filter === NONE) return "Unassigned";
+    var a = advById(state.filter);
+    return a ? (a.name || "Untitled adventure") : "Adventure";
+  }
+
+  function renderAdventures() {
+    var sel = $("adv-filter");
+    function count(fn) { return state.tabs.filter(fn).length; }
+    var html = '<option value="' + ALL + '">All encounters (' + state.tabs.length + ")</option>";
+    state.adventures.forEach(function (a) {
+      html += '<option value="' + esc(a.id) + '">' + esc(a.name || "Untitled adventure") + " (" + count(function (t) { return t.adventureId === a.id; }) + ")</option>";
+    });
+    var un = count(function (t) { return !t.adventureId; });
+    if (state.adventures.length) html += '<option value="' + NONE + '">Unassigned (' + un + ")</option>";
+    sel.innerHTML = html;
+    sel.value = state.filter;
+
+    var isAdv = state.filter !== ALL && state.filter !== NONE;
+    $("adv-name-wrap").hidden = !isAdv;
+    $("adv-del").hidden = !isAdv;
+    if (isAdv && document.activeElement !== $("adv-name")) $("adv-name").value = advById(state.filter).name;
+
+    var tsel = $("tab-adv");
+    var th = '<option value="">No adventure</option>';
+    state.adventures.forEach(function (a) { th += '<option value="' + esc(a.id) + '">' + esc(a.name || "Untitled adventure") + "</option>"; });
+    tsel.innerHTML = th;
+    tsel.value = activeTab().adventureId || "";
+  }
+
+  function renderEncounters() {
+    var vis = visibleTabs();
+    var grid = $("enc-grid");
+    var hadFocus = grid.contains(document.activeElement) ? document.activeElement.dataset.id : null;
+    grid.innerHTML = "";
+    var tally = {};
+    vis.forEach(function (t) {
+      var r = compute(t);
+      tally[r.band] = (tally[r.band] || 0) + 1;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "enc sev-" + r.band;
+      b.dataset.id = t.id;
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", t.id === state.active ? "true" : "false");
+      var n = document.createElement("span"); n.className = "enc-name"; n.textContent = t.name || "Untitled";
+      var meta = document.createElement("span"); meta.className = "enc-meta";
+      var bd = document.createElement("span"); bd.className = "enc-band"; bd.textContent = BAND_LABEL[r.band];
+      var x = document.createElement("span"); x.className = "enc-xp"; x.textContent = fmt(r.xp) + " XP";
+      meta.appendChild(bd); meta.appendChild(x);
+      b.appendChild(n); b.appendChild(meta);
+      if (state.filter === ALL && t.adventureId) {
+        var a = document.createElement("span"); a.className = "enc-adv"; a.textContent = (advById(t.adventureId) || {}).name || "";
+        b.appendChild(a);
+      }
+      b.title = (t.name || "Untitled") + ": " + BAND_LABEL[r.band];
+      b.addEventListener("click", function () { switchTab(t.id); });
+      grid.appendChild(b);
+      if (hadFocus === t.id) b.focus();
+    });
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "enc new";
+    add.textContent = "+ New encounter";
+    add.addEventListener("click", function () { createTab(); });
+    grid.appendChild(add);
+
+    var parts = [];
+    ["extreme", "high", "moderate", "low", "trivial", "pending"].forEach(function (k) { if (tally[k]) parts.push(tally[k] + " " + BAND_LABEL[k]); });
+    $("ov-summary").textContent = filterLabel() + ": " + vis.length + (vis.length === 1 ? " encounter" : " encounters") +
+      (parts.length ? " · " + parts.join(" · ") : "");
+  }
+
+  $("adv-filter").addEventListener("change", function (e) { setFilter(e.target.value); });
+
+  function setFilter(f) {
+    state.filter = f;
+    var vis = visibleTabs();
+    if (!vis.some(function (t) { return t.id === state.active; })) {
+      if (vis.length) state.active = vis[0].id;
+      else { createTab(null, true); return; }
+    }
+    renderAll();
+    save();
+  }
+
+  $("adv-new").addEventListener("click", function () {
+    var n = state.adventures.length + 1;
+    var names = state.adventures.map(function (a) { return a.name; });
+    while (names.indexOf("Adventure " + n) !== -1) n++;
+    var a = { id: uid("a"), name: "Adventure " + n };
+    state.adventures.push(a);
+    state.pristine = false;
+    setFilter(a.id);
+    $("adv-name").focus();
+    $("adv-name").select();
+  });
+
+  $("adv-name").addEventListener("input", function (e) {
+    var a = advById(state.filter);
+    if (!a) return;
+    a.name = e.target.value;
+    var sel = $("adv-filter");
+    var opt = sel.options[sel.selectedIndex];
+    if (opt) opt.textContent = (a.name || "Untitled adventure") + " (" + visibleTabs().length + ")";
+    var topt = $("tab-adv").querySelector('option[value="' + a.id + '"]');
+    if (topt) topt.textContent = a.name || "Untitled adventure";
+    changed();
+  });
+  $("adv-name").addEventListener("blur", function () {
+    var a = advById(state.filter);
+    if (a && !a.name.trim()) { a.name = "Untitled adventure"; renderAdventures(); save(); }
+  });
+  $("adv-name").addEventListener("keydown", function (e) { if (e.key === "Enter") e.target.blur(); });
+
+  $("adv-del").addEventListener("click", function (e) {
+    armed(e.currentTarget, "Delete adventure", "Click again to delete", function () {
+      var id = state.filter;
+      state.adventures = state.adventures.filter(function (a) { return a.id !== id; });
+      state.tabs.forEach(function (t) { if (t.adventureId === id) t.adventureId = null; });
+      state.pristine = false;
+      setFilter(ALL);
+      toast("Adventure deleted. Its encounters were kept.");
+    });
+  });
+
+  // ---------------------------------------------------------------- encounters
+  function renderTabTools() {
+    var t = activeTab();
+    if (document.activeElement !== $("tab-name")) $("tab-name").value = t.name;
+    var del = $("del-tab");
+    del.disabled = state.tabs.length <= 1;
+    del.title = state.tabs.length <= 1 ? "Keep at least one encounter" : "";
+    updateQuerySession();
+  }
+
+  function updateQuerySession() {
+    var t = activeTab();
+    var slug = ((t && t.name) || "untitled").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "untitled";
+    $("query-session").textContent = slug;
+  }
+
+  function switchTab(id) {
+    if (id === state.active) return;
+    state.active = id;
+    if (!visibleTabs().some(function (t) { return t.id === id; })) state.filter = ALL;
+    renderAll();
+    save();
+  }
+
+  function nextDefaultName() {
+    var n = state.tabs.length + 1;
+    var names = state.tabs.map(function (t) { return t.name; });
+    while (names.indexOf("Test " + String(n).padStart(2, "0")) !== -1) n++;
+    return "Test " + String(n).padStart(2, "0");
+  }
+
+  function createTab(copyFrom, quiet) {
+    var cur = activeTab();
+    var advId = copyFrom ? copyFrom.adventureId : (state.filter !== ALL && state.filter !== NONE ? state.filter : null);
+    var t = newTab(copyFrom ? (copyFrom.name + " (copy)").slice(0, 60) : nextDefaultName(), advId, clone((copyFrom || cur).party));
+    if (copyFrom) t.monsters = clone(copyFrom.monsters).map(function (m) { m.id = uid("m"); return m; });
+    var idx = state.tabs.indexOf(cur);
+    state.tabs.splice(idx + 1, 0, t);
+    state.active = t.id;
+    state.pristine = false;
+    renderAll();
+    save();
+    if (!quiet) { $("tab-name").focus(); $("tab-name").select(); }
+  }
+
+  $("tab-name").addEventListener("input", function (e) {
+    activeTab().name = e.target.value;
+    updateQuerySession();
+    changed();
+  });
+  $("tab-name").addEventListener("blur", function () {
+    var t = activeTab();
+    if (!t.name.trim()) { t.name = "Untitled"; renderTabTools(); renderEncounters(); save(); }
+  });
+  $("tab-name").addEventListener("keydown", function (e) { if (e.key === "Enter") e.target.blur(); });
+
+  $("tab-adv").addEventListener("change", function (e) {
+    var t = activeTab();
+    t.adventureId = e.target.value || null;
+    state.pristine = false;
+    if (state.filter !== ALL) state.filter = t.adventureId || NONE; // follow it to its new home
+    renderAll();
+    save();
+    var a = advById(t.adventureId);
+    toast(a ? "Moved to “" + a.name + "”." : "Removed from its adventure.");
+  });
+
+  $("dup-tab").addEventListener("click", function () { createTab(activeTab()); toast("Encounter duplicated."); });
+
+  $("del-tab").addEventListener("click", function (e) {
+    if (state.tabs.length <= 1) return;
+    armed(e.currentTarget, "Delete encounter", "Click again to delete", function () {
+      var t = activeTab();
+      var vIdx = visibleTabs().indexOf(t);
+      state.tabs.splice(state.tabs.indexOf(t), 1);
+      var remaining = visibleTabs();
+      if (remaining.length) state.active = remaining[Math.max(0, vIdx - 1)].id;
+      else { state.filter = ALL; state.active = state.tabs[0].id; }
+      state.pristine = false;
+      renderAll();
+      save();
+      toast("Deleted “" + t.name + "”.");
+    });
+  });
+
+  // Two-step confirm instead of a browser pop-up.
+  function armed(btn, label, armedLabel, fn) {
+    if (btn.dataset.armed === "1") {
+      btn.dataset.armed = "";
+      btn.textContent = label;
+      fn();
+      return;
+    }
+    btn.dataset.armed = "1";
+    btn.textContent = armedLabel;
+    setTimeout(function () { if (btn.isConnected && btn.dataset.armed === "1") { btn.dataset.armed = ""; btn.textContent = label; } }, 3000);
+  }
+
+  function renderAll() {
+    renderAdventures();
+    renderEncounters();
+    renderTabTools();
+    renderParty();
+    renderMonsters();
+    refreshReadout();
+  }
+
+  // ---------------------------------------------------------------- import / export
+  function importData(obj) {
+    var replace = state.pristine;
+    var incoming;
+    if (obj && Array.isArray(obj.tabs)) incoming = normalize(clone(obj));
+    else if (obj && Array.isArray(obj.party)) incoming = normalize({ tabs: [{ id: "x", name: "Test 01", party: obj.party, monsters: obj.monsters }] });
+    else throw new Error("nothing");
+    var advMap = {};
+    incoming.adventures.forEach(function (a) { var id = uid("a"); advMap[a.id] = id; a.id = id; });
+    incoming.tabs.forEach(function (t) {
+      t.id = uid("t");
+      t.adventureId = advMap[t.adventureId] || null;
+      t.monsters.forEach(function (m) { m.id = uid("m"); });
+    });
+    if (replace) { state.tabs = incoming.tabs; state.adventures = incoming.adventures; }
+    else { state.tabs = state.tabs.concat(incoming.tabs); state.adventures = state.adventures.concat(incoming.adventures); }
+    state.active = incoming.tabs[0].id;
+    state.filter = ALL;
+    state.pristine = false;
+    renderAll();
+    save();
+    return incoming.tabs.length;
+  }
+
+  $("export-btn").addEventListener("click", function () {
+    $("import-wrap").hidden = true;
+    $("export-wrap").hidden = false;
+    var ta = $("export-text");
+    ta.value = JSON.stringify(state);
+    ta.focus(); ta.select();
+    $("backup-msg").textContent = "";
+  });
+  $("copy-btn").addEventListener("click", function () {
+    var ta = $("export-text");
+    ta.focus(); ta.select();
+    var done = function () { $("backup-msg").textContent = "Copied. Keep it somewhere safe as a backup."; };
+    var fail = function () { $("backup-msg").textContent = "Couldn't copy automatically. The text is selected: press Ctrl+C (or Cmd+C on a Mac)."; };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, function () { try { document.execCommand("copy") ? done() : fail(); } catch (e) { fail(); } });
+      else document.execCommand("copy") ? done() : fail();
+    } catch (e) { fail(); }
+  });
+  $("import-btn").addEventListener("click", function () {
+    $("export-wrap").hidden = true;
+    $("import-wrap").hidden = false;
+    $("import-text").focus();
+    $("backup-msg").textContent = "";
+  });
+  $("import-go").addEventListener("click", function () {
+    var raw = $("import-text").value.trim();
+    if (!raw) { $("backup-msg").textContent = "Paste an exported log into the box first."; return; }
+    try {
+      var n = importData(JSON.parse(raw));
+      $("import-text").value = "";
+      $("import-wrap").hidden = true;
+      $("backup-msg").textContent = "Imported " + n + (n === 1 ? " encounter." : " encounters.");
+      toast("Imported " + n + (n === 1 ? " encounter." : " encounters."));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      $("backup-msg").textContent = "That text couldn't be read as a log. Make sure you copied the whole export.";
+    }
+  });
+
+  // ---------------------------------------------------------------- saving (browser cache + cloud)
+  var sync = { ref: null, writing: false, dirty: false, timer: null, lastRev: null, pendingRemote: null, first: true };
+  function setSync(t) { $("sync-state").textContent = t; }
+
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* storage blocked: cloud still works */ }
+    if (!sync.ref) return;
+    setSync("SAVING");
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(flush, 800);
+  }
+
+  function flush(retried) {
+    sync.timer = null;
+    if (!sync.ref) return;
+    if (sync.writing) { sync.dirty = true; return; }
+    sync.writing = true;
+    var rev = uid("v");
+    sync.lastRev = rev;
+    sync.ref.set({ v: 4, rev: rev, savedAt: new Date().toISOString(), state: clone(state) }).then(function () {
+      setSync("CLOUD");
+    }, function (e) {
+      var code = e && e.code;
+      if (code === "unavailable" && !retried) { sync.writing = false; setTimeout(function () { flush(true); }, 1500 + Math.random() * 1000); return; }
+      if (code === "quota_exceeded") { setSync("FULL"); toast("Cloud storage is full. Delete some old encounters, or export a backup."); }
+      else { setSync("LOCAL ONLY"); toast("Couldn't save to the cloud just now. Your changes are kept in this browser."); }
+    }).then(function () {
+      sync.writing = false;
+      if (sync.dirty) { sync.dirty = false; flush(); }
+    });
+  }
+
+  function isEditing() {
+    var el = document.activeElement;
+    return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
+  }
+
+  function adoptRemote(d) {
+    if (isEditing()) { sync.pendingRemote = d; return; }
+    sync.pendingRemote = null;
+    sync.lastRev = d.rev;
+    state = normalize(clone(d.state));
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+    renderAll();
+    setSync("CLOUD");
+  }
+
+  document.addEventListener("focusout", function () {
+    setTimeout(function () {
+      if (sync.pendingRemote && !isEditing() && !sync.timer && !sync.writing) adoptRemote(sync.pendingRemote);
+    }, 0);
+  });
+
+  function onRemote(snap) {
+    if (snap.metadata && snap.metadata.hasPendingWrites) return;
+    if (!snap.exists) {
+      if (snap.metadata && snap.metadata.fromCache) return;
+      if (sync.first) { sync.first = false; flush(); }
+      return;
+    }
+    sync.first = false;
+    var d = snap.data();
+    if (!d || !d.state || d.rev === sync.lastRev) { setSync("CLOUD"); return; }
+    if (sync.timer || sync.writing) return; // our newer edit is about to land
+    adoptRemote(d);
+  }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) return normalize(JSON.parse(raw));
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  // ---------------------------------------------------------------- start
+  state = loadLocal() || defaultState();
+  renderAll();
+
+  setSync("LOCAL ONLY");
+})();
+</script>
+
+
+</body></html>
