@@ -949,7 +949,7 @@
   }
 
   // ---------------------------------------------------------------- maths
-  function monsterXp(m) { return m.mode === "xp" ? (parseFloat(m.value) || 0) : (CR_TO_XP[m.value] || 0); }
+  function monsterXp(m) { return m.mode === "xp" ? Math.max(0, parseFloat(m.value) || 0) : (CR_TO_XP[m.value] || 0); }
 
   function compute(tab) {
     var low = 0, mod = 0, high = 0, n = 0, xp = 0;
@@ -1088,7 +1088,7 @@
         m.mode = b.dataset.mode;
         if (m.mode === "xp") m.value = xp;
         else {
-          var best = "1";
+          var best = "0";
           CR_ORDER.forEach(function (cr) { if (CR_TO_XP[cr] <= xp) best = cr; });
           m.value = best;
         }
@@ -1155,7 +1155,8 @@
     $("tile-moderate").textContent = fmt(r.mod);
     $("tile-high").textContent = fmt(r.high);
 
-    var scaleMax = Math.max(r.high * 1.4, 100);
+    // Show a bit past 1.5x High, where "Beyond High" starts.
+    var scaleMax = Math.max(r.high * 1.6, 100);
     var pT = (r.low / scaleMax) * 100, pL = ((r.mod - r.low) / scaleMax) * 100, pM = ((r.high - r.mod) / scaleMax) * 100;
     $("seg-trivial").style.width = Math.max(pT, 0) + "%";
     $("seg-low").style.width = Math.max(pL, 0) + "%";
